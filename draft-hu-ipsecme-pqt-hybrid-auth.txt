@@ -1,0 +1,408 @@
+
+
+
+
+ipsecme                                                           H. Jun
+Internet-Draft                                                     Nokia
+Intended status: Standards Track                              Y. Morioka
+Expires: 6 February 2025                                   5 August 2024
+
+
+ Post-Quantum Traditional (PQ/T) Hybrid Authentication in the Internet
+                     Key Exchange Version 2 (IKEv2)
+                draft-hu-ipsecme-pqt-hybrid-auth-latest
+
+Abstract
+
+   One IPsec area that would be impacted by Cryptographically Relevant
+   Quantum Computer (CRQC) is IKEv2 authentication based on classic
+   asymmetric cryptograph algorithms: e.g RSA, ECDSA; There are new
+   Post-Quantum Cryptograph (PQC) algorithms for digital signature like
+   NIST [ML-DSA], however it takes time for new cryptograph algorithms
+   to mature, so there is security risk to use only the new algorithm
+   before it is field proven.  This document describes a IKEv2 hybrid
+   authentication scheme that could contain both classic and PQC
+   algorithms, so that authentication is secure as long as one algorithm
+   in the hybrid scheme is secure.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at
+   https://example.com/LATEST.  Status information for this document may
+   be found at https://datatracker.ietf.org/doc/draft-hu-ipsecme-pqt-
+   hybrid-auth/.
+
+   Discussion of this document takes place on the WG Working Group
+   mailing list (mailto:ipsec@ietf.org), which is archived at
+   https://mailarchive.ietf.org/arch/browse/ipsec/.  Subscribe at
+   https://www.ietf.org/mailman/listinfo/ipsec/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/USER/REPO.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 6 February 2025.
+
+Copyright Notice
+
+   Copyright (c) 2024 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+   2.  Conventions and Definitions
+   3.  IKEv2 Key Exchange
+   4.  Exchanges
+     4.1.  Announcement
+     4.2.  AUTH Payload
+     4.3.  RelatedCertificate
+     4.4.  Certificate with Composite Keys
+   5.  Security Considerations
+   6.  IANA Considerations
+   7.  References
+     7.1.  Normative References
+     7.2.  Informative References
+   Acknowledgments
+   Authors' Addresses
+
+1.  Introduction
+
+   A Cryptographically Relevant Quantum Computer (CRQC) could break
+   classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are
+   widely deployed authentication options of IKEv2.  New Post-Quantum
+   Cryptograph (PQC) algorithms for digital signature are being
+   standardized at the time of writing like NIST [ML-DSA], however
+   consider potential flaws in the new algorithm's specifications and
+   implementations, it will take sometime for these new PQC algorithms
+   to be field proven. so it is risky to only use PQC algorithms before
+   they are mature.  There is more detailed discussion on motivation of
+   a hybrid approach for authentication in Section 1.3 of
+   [I-D.ietf-pquip-hybrid-signature-spectrums].
+
+   This document describes a IKEv2 hybrid authentication scheme that
+   contains both classic and PQC algorithms, so that authentication is
+   secure as long as one algorithm in the hybrid scheme is secure.
+
+2.  Conventions and Definitions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+   Cryptographically Relevant Quantum Computer (CRQC): A quantum
+   computer that is capable of breaking real world cryptographic
+   systems.
+
+   Post-Quantum Cryptograph (PQC) algorithms: Asymmetric cryptograph
+   algorithms are thought to be secure against CRQC.
+
+   Traditional Cryptograph algorithms: Existing asymmetric cryptograph
+   algorithms could be broken by CRQC, like RSA, ECDSA ..etc.
+
+3.  IKEv2 Key Exchange
+
+   There is no changes introduced in this document to the IKEv2 key
+   exchange process, although it MUST be also resilient to CRQC when
+   using along with the PQ/T hybrid authentication, for example key
+   exchange using the PPK as defined in [RFC8784], or hybrid key
+   exchanges that include PQC algorithm via multiple key exchange
+   process as defined in [RFC9370].
+
+4.  Exchanges
+
+   The hybrid authentication exchanges is illustrated in an example
+   depicted in Figure 1, the key exchange uses PPK, however it could be
+   other key exchanges that involves PQC algorithm since how key
+   exchange is done is transparent to authentication.
+
+   Initiator                         Responder
+   -------------------------------------------------------------------
+   HDR, SAi1, KEi, Ni,
+        N(SIGNATURE_HASH_ALGORITHMS), N(USE_PPK) -->
+                                <--  HDR, SAr1, KEr, Nr, [CERTREQ,] N(USE_PPK),
+                                         N(SIGNATURE_HASH_ALGORITHMS),
+                                         N(SUPPORTED_AUTH_METHODS)
+
+   HDR, SK {IDi, CERT+, [CERTREQ,]
+            [IDr,] AUTH, SAi2,
+            TSi, TSr, N(PPK_IDENTITY, PPK_ID),
+            N(SUPPORTED_AUTH_METHODS)} -->
+                                <--  HDR, SK {IDr, CERT+, [CERTREQ,]
+                                         AUTH, [N(PPK_IDENTITY)]}
+
+ Figure 1: Hybrid Authentication Exchanges with RFC8784 Key Exchange
+
+4.1.  Announcement
+
+   Both peers includes SIGNATURE_HASH_ALGORITHMS as defined in Section 4
+   of [RFC7427] notification in IKE_SA_INIT exchange to indicate
+   supported hash algorithms used with digital signature.
+
+   Responder includes SUPPORTED_AUTH_METHODS as defined in [RFC9593]
+   notification include a list of supported authentication methods
+   announcements includes a hybrid authentication announcements with
+   following format:
+
+                       1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Length (>3)  |  Auth Method  |   Cert Link 1 | Alg 1 Len     |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   ~                      AlgorithmIdentifier 1                    ~
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Cert Link 2   | Alg 2 Len     |                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+   |                                                               |
+   ~                      AlgorithmIdentifier 2                    ~
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   ~                      ...                                      ~
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Cert Link N   | Alg N Len     |                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+   |                                                               |
+   ~                      AlgorithmIdentifier N                     ~
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                Figure 2: Hybrid Authentication Announcement
+
+   The announcement include a list algorithms could be used for hybrid
+   signature
+
+   *  Auth Method: A new value to be allocated by IANA
+
+   *  Cert Link N: Links corresponding signature algorithm N with a
+      particular CA. as defined in Section 3.2.2 of [RFC9593]
+
+   *  AlgorithmIdentifier N: The variable-length ASN.1 object that is
+      encoded using Distinguished Encoding Rules (DER) [X.690] and
+      identifies the signature algorithm;
+
+   Receiver of this announcement could choose one PQC algorithm and one
+   traditional algorithm from the list to create the hybrid signature.
+
+   Initiator also includes SUPPORTED_AUTH_METHODS notification in
+   IKE_AUTH request message to announce its support of hybrid
+   authentication.
+
+4.2.  AUTH Payload
+
+   The IKEv2 AUTH payload has following format as defined in Section 3.8
+   of [RFC7296]:
+
+                           1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     | Next Payload  |C|  RESERVED   |         Payload Length        |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     | Auth Method   |                RESERVED                       |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     |                                                               |
+     ~                      Authentication Data                      ~
+     |                                                               |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                           Figure 3: AUTH payload
+
+   For hybrid authentication, the AUTH Method has value defined in
+   Section 4.1
+
+   The Authentication Data field follows format defined in Section 3 of
+   [RFC7427]:
+
+                          1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     | ASN.1 Length  | AlgorithmIdentifier ASN.1 object              |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     |                                                               |
+     ~        AlgorithmIdentifier ASN.1 object continuing            ~
+     |                                                               |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+     |                                                               |
+     ~                         Signature Value                       ~
+     |                                                               |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+            Figure 4: Authentication Data in hybrid AUTH payload
+
+   The Signature Value is created via following procedure:
+
+   1.  Choose a hash algorithm H from peer's SIGNATURE_HASH_ALGORITHMS,
+       a PQC algorithm Sig1 and a traditional algorithm Sig2 from peer's
+       hybrid authentication method announcement;
+
+   2.  Follow the procedure defined in Section 4.2 of
+       [I-D.ietf-lamps-pq-composite-sigs], where the domain separator is
+       the value in Section 7.1 of [I-D.ietf-lamps-pq-composite-sigs]
+       correspond to the combination of Sig1, Sig2 and H.
+
+   The domain separator is also used as AlgorithmIdentifier in the
+   Authentication Data.
+
+   The corresponding certificates of Sig1 and Sig2 MUST be put in the
+   first and second CERT payload, in the order, of the message;
+
+4.3.  RelatedCertificate
+
+   The signing certificate MAY contain RelatedCertificate extension,
+   then the receiver SHOULD verify the extension according to
+   Section 4.2 of [I-D.ietf-lamps-cert-binding-for-multi-auth], failed
+   verification SHOULD fail authentication.
+
+4.4.  Certificate with Composite Keys
+
+   So far, this document assumes the signing certificate contains a key
+   of single algorithm, however there might be certificate with
+   composite key as define in [I-D.ietf-lamps-pq-composite-sigs], in
+   such case, AUTH payload is created with same procedure in
+   Section 4.2:
+
+   *  Sig1 and Sig2 are specified by the signing certificate
+
+   Supported composite signature algorithms are announced via
+   SUPPORTED_AUTH_METHODS notification with 3-Octet announcement as
+   defined in Section 3.2.2 of [RFC9593].
+
+5.  Security Considerations
+
+   The security of general PQ/T hybrid authentication is discussed in
+   [I-D.ietf-pquip-hybrid-signature-spectrums].
+
+   This document uses mechanisms defined in [RFC7427] and [RFC9593], the
+   security discussion in the corresponding RFCs also apply.
+
+6.  IANA Considerations
+
+   This document requests a value in "IKEv2 Authentication Method"
+   subregistry under IANA "Internet Key Exchange Version 2 (IKEv2)
+   Parameters" registry
+
+7.  References
+
+7.1.  Normative References
+
+   [I-D.ietf-lamps-cert-binding-for-multi-auth]
+              Becker, A., Guthrie, R., and M. J. Jenkins, "Related
+              Certificates for Use in Multiple Authentications within a
+              Protocol", Work in Progress, Internet-Draft, draft-ietf-
+              lamps-cert-binding-for-multi-auth-05, 29 April 2024,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-lamps-
+              cert-binding-for-multi-auth-05>.
+
+   [I-D.ietf-lamps-pq-composite-sigs]
+              Ounsworth, M., Gray, J., Pala, M., Klaußner, J., and S.
+              Fluhrer, "Composite ML-DSA for use in Internet PKI", Work
+              in Progress, Internet-Draft, draft-ietf-lamps-pq-
+              composite-sigs-02, 8 July 2024,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-lamps-
+              pq-composite-sigs-02>.
+
+   [I-D.ietf-pquip-hybrid-signature-spectrums]
+              Bindel, N., Hale, B., Connolly, D., and F. D, "Hybrid
+              signature spectrums", Work in Progress, Internet-Draft,
+              draft-ietf-pquip-hybrid-signature-spectrums-00, 24 May
+              2024, <https://datatracker.ietf.org/doc/html/draft-ietf-
+              pquip-hybrid-signature-spectrums-00>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC4739]  Eronen, P. and J. Korhonen, "Multiple Authentication
+              Exchanges in the Internet Key Exchange (IKEv2) Protocol",
+              RFC 4739, DOI 10.17487/RFC4739, November 2006,
+              <https://www.rfc-editor.org/rfc/rfc4739>.
+
+   [RFC7296]  Kaufman, C., Hoffman, P., Nir, Y., Eronen, P., and T.
+              Kivinen, "Internet Key Exchange Protocol Version 2
+              (IKEv2)", STD 79, RFC 7296, DOI 10.17487/RFC7296, October
+              2014, <https://www.rfc-editor.org/rfc/rfc7296>.
+
+   [RFC7427]  Kivinen, T. and J. Snyder, "Signature Authentication in
+              the Internet Key Exchange Version 2 (IKEv2)", RFC 7427,
+              DOI 10.17487/RFC7427, January 2015,
+              <https://www.rfc-editor.org/rfc/rfc7427>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [RFC9593]  Smyslov, V., "Announcing Supported Authentication Methods
+              in the Internet Key Exchange Protocol Version 2 (IKEv2)",
+              RFC 9593, DOI 10.17487/RFC9593, July 2024,
+              <https://www.rfc-editor.org/rfc/rfc9593>.
+
+   [X.690]    "Information Technology - ASN.1 encoding rules:
+              Specification of Basic Encoding Rules (BER), Canonical
+              Encoding Rules (CER) and Distinguished Encoding Rules
+              (DER)", ISO/IEC 8825-1:2021 (E), ITU-T Recommendation
+              X.690, February 2021.
+
+7.2.  Informative References
+
+   [ML-DSA]   "Module-Lattice-Based Digital Signature Standard", NIST 
+              FIPS-204, State Initial Public Draft, August 2023,
+              <https://csrc.nist.gov/pubs/fips/204/ipd>.
+
+   [QRPKI]    Bindel, N., Herath, U., McKague, M., and D. Stebila,
+              "Transitioning to a Quantum-Resistant Public Key
+              Infrastructure", 2017, <https://eprint.iacr.org/2017/460>.
+
+   [RFC8784]  Fluhrer, S., Kampanakis, P., McGrew, D., and V. Smyslov,
+              "Mixing Preshared Keys in the Internet Key Exchange
+              Protocol Version 2 (IKEv2) for Post-quantum Security",
+              RFC 8784, DOI 10.17487/RFC8784, June 2020,
+              <https://www.rfc-editor.org/rfc/rfc8784>.
+
+   [RFC9370]  Tjhai, CJ., Tomlinson, M., Bartlett, G., Fluhrer, S., Van
+              Geest, D., Garcia-Morchon, O., and V. Smyslov, "Multiple
+              Key Exchanges in the Internet Key Exchange Protocol
+              Version 2 (IKEv2)", RFC 9370, DOI 10.17487/RFC9370, May
+              2023, <https://www.rfc-editor.org/rfc/rfc9370>.
+
+Acknowledgments
+
+   TODO acknowledge.
+
+Authors' Addresses
+
+   Hu, Jun
+   Nokia
+   Email: jun.hu@nokia.com
+
+
+   Yasushi Morioka
