@@ -6,9 +6,9 @@
 <meta content="initial-scale=1.0" name="viewport">
 <title>Post-Quantum Traditional (PQ/T) Hybrid Authentication in the Internet Key Exchange Version 2 (IKEv2)</title>
 <meta content="Hu, Jun" name="author">
-<meta content="Yasushi Morioka" name="author">
+<meta content="Yasufumi Morioka" name="author">
 <meta content="
-       One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; There are new Post-Quantum Cryptograph (PQC) algorithms for digital signature like NIST  , however it takes time for new cryptograph algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a IKEv2 hybrid authentication scheme that could contain both classic and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure. 
+       One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. There are new Post-Quantum Cryptograph (PQC) algorithms for digital signature like NIST  , however it takes time for new cryptograph algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a IKEv2 hybrid authentication scheme that could contain both classic and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure. 
     " name="description">
 <meta content="xml2rfc 3.22.0" name="generator">
 <meta content="Post-Quantum" name="keyword">
@@ -27,7 +27,7 @@
     pycountry 22.3.5
     PyYAML 6.0.1
     requests 2.32.3
-    setuptools 69.5.1
+    setuptools 70.3.0
     wcwidth 0.2.13
 -->
 <link href="draft-hu-ipsecme-pqt-hybrid-auth.xml" rel="alternate" type="application/rfc+xml">
@@ -1031,7 +1031,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Jun &amp; Morioka</td>
-<td class="center">Expires 6 February 2025</td>
+<td class="center">Expires 24 February 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1044,12 +1044,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-hu-ipsecme-pqt-hybrid-auth-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-08-05" class="published">5 August 2024</time>
+<time datetime="2024-08-23" class="published">23 August 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-02-06">6 February 2025</time></dd>
+<dd class="expires"><time datetime="2025-02-24">24 February 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1058,6 +1058,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </div>
 <div class="author">
       <div class="author-name">Y. Morioka</div>
+<div class="org">NTT DOCOMO, INC.</div>
 </div>
 </dd>
 </dl>
@@ -1065,7 +1066,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Post-Quantum Traditional (PQ/T) Hybrid Authentication in the Internet Key Exchange Version 2 (IKEv2)</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; There are new Post-Quantum Cryptograph (PQC) algorithms for digital signature like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however it takes time for new cryptograph algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a IKEv2 hybrid authentication scheme that could contain both classic and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. There are new Post-Quantum Cryptograph (PQC) algorithms for digital signature like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however it takes time for new cryptograph algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a IKEv2 hybrid authentication scheme that could contain both classic and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1102,7 +1103,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 6 February 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 24 February 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1189,7 +1190,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">A Cryptographically Relevant Quantum Computer (CRQC) could break classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. New Post-Quantum Cryptograph (PQC) algorithms for digital signature are being standardized at the time of writing like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however consider potential flaws in the new algorithm's specifications and implementations, it will take sometime for these new PQC algorithms to be field proven. so it is risky to only use PQC algorithms before they are mature. There is more detailed discussion on motivation of a hybrid approach for authentication in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-00#section-1.3" class="relref">Section 1.3</a> of [<a href="#I-D.ietf-pquip-hybrid-signature-spectrums" class="cite xref">I-D.ietf-pquip-hybrid-signature-spectrums</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">A Cryptographically Relevant Quantum Computer (CRQC) could break classic asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. New Post-Quantum Cryptograph (PQC) algorithms for digital signature are being standardized at the time of writing like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however consider potential flaws in the new algorithm's specifications and implementations, it will take time for these new PQC algorithms to be field proven. So it is risky to only use PQC algorithms before they are mature. There is more detailed discussion on motivation of a hybrid approach for authentication in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-00#section-1.3" class="relref">Section 1.3</a> of [<a href="#I-D.ietf-pquip-hybrid-signature-spectrums" class="cite xref">I-D.ietf-pquip-hybrid-signature-spectrums</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">This document describes a IKEv2 hybrid authentication scheme that contains both classic and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.<a href="#section-1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1511,7 +1512,12 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </div>
 </address>
 <address class="vcard">
-        <div dir="auto" class="left"><span class="fn nameRole">Yasushi Morioka</span></div>
+        <div dir="auto" class="left"><span class="fn nameRole">Yasufumi Morioka</span></div>
+<div dir="auto" class="left"><span class="org">NTT DOCOMO, INC.</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:yasufumi.morioka.dt@nttdocomo.com" class="email">yasufumi.morioka.dt@nttdocomo.com</a>
+</div>
 </address>
 </section>
 </div>
