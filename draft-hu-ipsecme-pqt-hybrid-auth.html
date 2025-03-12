@@ -4,28 +4,29 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>Post-Quantum Traditional (PQ/T) Hybrid Authentication in the Internet Key Exchange Version 2 (IKEv2)</title>
+<title>Post-Quantum Traditional (PQ/T) Hybrid PKI Authentication in the Internet Key Exchange Version 2 (IKEv2)</title>
 <meta content="Hu, Jun" name="author">
 <meta content="Yasufumi Morioka" name="author">
+<meta content="Wang, Guilin" name="author">
 <meta content="
        One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on traditional asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. There are new Post-Quantum Cryptograph (PQC) algorithms for digital signature like NIST  , however it takes time for new cryptograph algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a IKEv2 hybrid authentication scheme that could contain both traditional and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure. 
     " name="description">
-<meta content="xml2rfc 3.23.2" name="generator">
+<meta content="xml2rfc 3.28.0" name="generator">
 <meta content="Post-Quantum" name="keyword">
 <meta content="Hybrid Authentication" name="keyword">
 <meta content="IKEv2" name="keyword">
 <meta content="draft-hu-ipsecme-pqt-hybrid-auth-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.23.2
-    Python 3.12.7
+  xml2rfc 3.28.0
+    Python 3.12.9
     ConfigArgParse 1.7
     google-i18n-address 3.1.1
     intervaltree 3.1.0
-    Jinja2 3.1.4
-    lxml 4.9.4
+    Jinja2 3.1.5
+    lxml 5.3.0
     platformdirs 4.3.6
-    pycountry 22.3.5
-    PyYAML 6.0.1
+    pycountry 24.6.1
+    PyYAML 6.0.2
     requests 2.32.3
     setuptools 70.3.0
     wcwidth 0.2.13
@@ -281,6 +282,12 @@ body {
 }
 
 /* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
   font-weight: 680;
@@ -312,6 +319,7 @@ h4, h5, h6 {
 /* general structure */
 .author {
   padding-bottom: 0.3em;
+  vertical-align: top;
 }
 #abstract+p {
   font-size: 18px;
@@ -389,25 +397,26 @@ svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
 ol, ul {
   padding: 0;
   margin: 0 0 0.5em 2em;
-}
-:is(ol, ul) :is(ol, ul) {
-  margin-left: 1em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
 }
 li {
   margin: 0 0 0.25em 0;
 }
-.ulCompact li {
-  margin: 0;
-}
 ul.empty, .ulEmpty {
   list-style-type: none;
-}
-ul.empty li, .ulEmpty li {
-  margin-top: 0.5em;
+  & li {
+    margin-top: 0.5em;
+  }
 }
 :is(ul, ol).compact, .ulCompact, .olCompact {
-  line-height: 1;
   margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
 }
 
 /* definition lists */
@@ -415,38 +424,39 @@ dl {
   clear: left;
   --indent: 3ch;
   /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+    }
+  }
+  &.olPercent > dt {
+    float: none;
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
 }
-dl.olPercent {
-  --indent: 5ch;
-}
-dl > dt {
+dl:not(.dlNewline) > dt {
   float: left;
   margin-right: 2ch;
   min-width: 8ch;
-}
-dl.dlNewline > dt {
-  float: none;
 }
 dl > dd {
   margin-bottom: .8em;
   margin-left: var(--indent) !important; /* stupid element overrides */
   min-height: 2ex;
 }
-dl.olPercent > dt {
-  min-width: calc(var(--indent) - 2ch);
-}
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
-}
-:is(dl.compact, .dlCompact) > dd > :is(:first-child, .break:first-child + *) {
-  margin-top: 0;
-}
-:is(dl.compact, .dlCompact) > dd > :is(:last-child) {
-  margin-bottom: 0;
-}
-dl > dd > dl {
-  margin-top: 0.5em;
-  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
 }
 :is(dd, span).break {
   display: none;
@@ -510,6 +520,7 @@ figcaption, caption {
   font-style: italic;
   margin: 0.5em 1.5em;
   text-align: left;
+  caption-side: bottom;
 }
 @media screen {
   /* Auto-collapse boilerplate. */
@@ -527,7 +538,11 @@ figcaption, caption {
   }
   pre, svg {
     display: inline-block;
-    overflow-x: auto;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
   }
   pre {
     max-width: 100%;
@@ -564,6 +579,7 @@ cite {
 
 /* tables */
 table {
+  width: auto;
   max-width: 100%;
   margin: 0 0 1em;
   border-collapse: collapse;
@@ -578,6 +594,16 @@ table.center {
 table.left {
   margin-right: auto;
 }
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
 thead, tbody {
   border: 1px solid var(--line-color);
 }
@@ -608,9 +634,11 @@ a.pilcrow {
   margin-left: 3px;
   opacity: 0.2;
   user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
 }
-a.pilcrow[href] { color: var(--pilcrow-weak); }
-a.pilcrow[href]:hover { text-decoration: none; }
 @media not print {
   :hover > a.pilcrow {
     opacity: 1;
@@ -650,26 +678,28 @@ sub, sup {
   font-size: var(--small-font-size);
   line-height: 18px;
   --identifier-width: 15ch;
-}
-#identifiers dt {
-  width: var(--identifier-width);
-  min-width: var(--identifier-width);
-  clear: left;
-  float: left;
-  text-align: right;
-  margin-right: 1ch;
-}
-#identifiers dd {
-  margin: 0;
-  margin-left: calc(1em + var(--identifier-width)) !important;
-  min-width: 5em;
-}
-#identifiers .authors .author {
-  display: inline-block;
-  margin-right: 1.5em;
-}
-#identifiers .authors .org {
-  font-style: italic;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
 }
 
 /* The prepared/rendered info at the very bottom of the page */
@@ -680,9 +710,6 @@ sub, sup {
   margin-top: 2em;
 }
 .docInfo .prepared {
-  float: left;
-}
-.docInfo .prepared {
   float: right;
 }
 
@@ -690,53 +717,48 @@ sub, sup {
 #toc {
   padding: 0.75em 0 2em 0;
   margin-bottom: 1em;
-}
-@media screen {
-  #toc nav {
-    font-family: var(--font-title);
-    font-weight: 360;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
   }
 }
-#toc nav ul {
-  margin: 0 0.5em 0 0;
-  padding: 0;
-  list-style: none;
-}
-#toc nav li {
-  line-height: 1.3em;
-  margin: 2px 0;
-  padding-left: 1.2em;
-  text-indent: -1.2em;
-}
-#toc a.xref {
-  white-space: normal;
-}
-/* references */
-.references dt {
-  text-align: right;
-  font-weight: bold;
-  min-width: 10ch;
-  margin-right: 1.5ch;
-}
-.references dt:target::before {
-  content: "⇒";
-  width: 15px;
-  margin: 0 10px 0 -25px;
-}
-.references dd {
-  margin-left: 12ch !important;
-  overflow: auto;
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
 }
 
-.refInstance {
-  margin-bottom: 1.25em;
-}
-
-.references .ascii {
-  margin-bottom: 0.25em;
-}
-
-/* index */
 #rfc\.index\.index + ul {
   margin-left: 0;
 }
@@ -744,21 +766,33 @@ sub, sup {
 /* authors */
 address.vcard {
   font-style: normal;
-  margin: 1em 0;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
 }
-address.vcard .nameRole {
-  font-weight: 700;
-  margin-left: 0;
-}
-address.vcard .label {
-  margin: 0.5em 0;
-}
-address.vcard .type {
-  display: none;
-}
-.alternative-contact {
-  margin: 1.5em 0 1em;
-}
+
 hr.addr {
   border-top: 1px dashed;
   margin: 0;
@@ -780,6 +814,7 @@ hr.addr {
   }
 }
 
+/* Comments */
 .rfcEditorRemove p:first-of-type {
   font-style: italic;
 }
@@ -790,7 +825,31 @@ hr.addr {
 .crefSource {
   font-style: italic;
 }
-/* alternative layout for smaller screens */
+
+@media screen {
+  #toc nav {
+    font-family: var(--font-title);
+    font-weight: 360;
+    & > ul { margin-bottom: 2em; }
+    & ul {
+      margin: 0 0 0 4px;
+      & :is(p, li) {
+        margin: 2px 0;
+      }
+    }
+  }
+  #toc a.toplink {
+    float: right;
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
 @media screen and (max-width: 929px) {
   #toc {
     position: fixed;
@@ -801,9 +860,6 @@ hr.addr {
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
-  }
-  #toc.active {
-      opacity: 1;
   }
   #toc h2 {
     margin: 0;
@@ -816,17 +872,17 @@ hr.addr {
     background-color: #444;
     color: white;
     cursor: pointer;
-  }
-  #toc h2::before { /* css hamburger */
-    float: right;
-    position: relative;
-    width: 1em;
-    height: 1px;
-    left: -164px;
-    margin: 8px 0 0 0;
-    background: white none repeat scroll 0 0;
-    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
-    content: "";
+    &::before { /* css hamburger */
+      float: right;
+      position: relative;
+      width: 1em;
+      height: 1px;
+      left: -164px;
+      margin: 8px 0 0 0;
+      background: white none repeat scroll 0 0;
+      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+      content: "";
+    }
   }
   #toc nav {
     display: none;
@@ -837,14 +893,13 @@ hr.addr {
     height: calc(100vh - 48px);
     border-left: 1px solid #ddd;
   }
-  #toc.active nav {
-    display: block;
+  #toc.active {
+    opacity: 1;
+    & nav { display: block; }
   }
   /* Make the collapsed ToC header render white on gray also when it's a link */
   #toc h2 a,
-  #toc h2 a:link,
-  #toc h2 a:focus,
-  #toc h2 a:hover,
+  #toc h2 a:is(:link, :focus, :hover),
   #toc a.toplink,
   #toc a.toplink:hover {
     color: white;
@@ -852,11 +907,11 @@ hr.addr {
     text-decoration: none;
   }
   #toc a.toplink {
-    margin-top: 2px;
+    margin: 2px 0.5em 0;
   }
 }
 
-/* alternative layout for wide screens */
+/* TOC layout for wide screens */
 @media screen and (min-width: 930px) {
   body {
     padding-right: 360px;
@@ -885,20 +940,12 @@ hr.addr {
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
-  #toc nav > ul  {
-    margin-bottom: 2em;
-  }
-  #toc ul {
-    margin: 0 0 0 4px;
-    font-size: var(--small-font-size);
-  }
-  #toc ul :is(p, li) {
-    margin: 2px 0;
-    line-height: 22px;
-  }
   img { /* future proofing */
     max-width: 100%;
     height: auto;
+  }
+  #toc a.toplink {
+    margin: 8px 0.5em 0;
   }
 }
 
@@ -941,9 +988,6 @@ hr.addr {
   td {
     border-top: 1px solid #ddd;
   }
-  .toplink {
-    display: none;
-  }
 }
 
 @page :first {
@@ -966,82 +1010,6 @@ hr.addr {
   size: A4;
   margin-bottom: 45mm;
   padding-top: 20px;
-}
-
-/* Changes introduced to fix issues found during implementation */
-
-/* Separate body from document info even without intervening H1 */
-section {
-  clear: both;
-}
-
-/* Top align author divs, to avoid names without organization dropping level with org names */
-.author {
-  vertical-align: top;
-}
-
-/* Style section numbers with more space between number and title */
-.section-number {
-  padding-right: 0.5em;
-}
-
-/* Add styling for a link in the ToC that points to the top of the document */
-a.toplink {
-  float: right;
-  margin: 8px 0.5em 0;
-}
-
-/* Provide styling for table cell text alignment */
-table .text-left {
-  text-align: left;
-}
-table .text-center {
-  text-align: center;
-}
-table .text-right {
-  text-align: right;
-}
-
-/* Make the alternative author contact information look less like just another
-   author, and group it closer with the primary author contact information */
-.alternative-contact {
-  margin: 0.5em 0 0.25em 0;
-}
-address .non-ascii {
-  margin: 0 0 0 2em;
-}
-
-/* With it being possible to set tables with alignment
-  left, center, and right, { width: 100%; } does not make sense */
-table {
-  width: auto;
-}
-
-/* Avoid reference text that sits in a block with very wide left margin,
-   because of a long floating dt label.*/
-.references dd {
-  overflow: visible;
-}
-
-/* Control caption placement */
-caption {
-  caption-side: bottom;
-}
-
-/* Limit the width of the author address vcard, so names in right-to-left
-   script don't end up on the other side of the page. */
-
-address.vcard {
-  max-width: 20em;
-  margin-right: auto;
-}
-
-/* For address alignment dependent on LTR or RTL scripts */
-address div.left {
-  text-align: left;
-}
-address div.right {
-  text-align: right;
 }
 
 /* Dark mode. */
@@ -1080,11 +1048,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">IKEv2 PQTH Auth</td>
-<td class="right">November 2024</td>
+<td class="right">March 2025</td>
 </tr></thead>
 <tfoot><tr>
-<td class="left">Jun &amp; Morioka</td>
-<td class="center">Expires 5 May 2025</td>
+<td class="left">Jun, et al.</td>
+<td class="center">Expires 13 September 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1097,12 +1065,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-hu-ipsecme-pqt-hybrid-auth-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-11-01" class="published">1 November 2024</time>
+<time datetime="2025-03-12" class="published">12 March 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-05-05">5 May 2025</time></dd>
+<dd class="expires"><time datetime="2025-09-13">13 September 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1113,10 +1081,14 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <div class="author-name">Y. Morioka</div>
 <div class="org">NTT DOCOMO, INC.</div>
 </div>
+<div class="author">
+      <div class="author-name">W. Guilin</div>
+<div class="org">Huawei</div>
+</div>
 </dd>
 </dl>
 </div>
-<h1 id="title">Post-Quantum Traditional (PQ/T) Hybrid Authentication in the Internet Key Exchange Version 2 (IKEv2)</h1>
+<h1 id="title">Post-Quantum Traditional (PQ/T) Hybrid PKI Authentication in the Internet Key Exchange Version 2 (IKEv2)</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on traditional asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. There are new Post-Quantum Cryptograph (PQC) algorithms for digital signature like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however it takes time for new cryptograph algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a IKEv2 hybrid authentication scheme that could contain both traditional and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
@@ -1156,7 +1128,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 5 May 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 13 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1165,7 +1137,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
         </h2>
 <p id="section-boilerplate.2-1">
-            Copyright (c) 2024 IETF Trust and the persons identified as the
+            Copyright (c) 2025 IETF Trust and the persons identified as the
             document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.2-2">
             This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1186,142 +1158,167 @@ svg :is([fill="white"], [fill^="#fff"]) {
         </h2>
 <nav class="toc"><ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
-            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-changes-in-01" class="internal xref">Changes in -01</a></p>
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-change-in-02" class="internal xref">Change in -02</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-changes-in-01" class="internal xref">Changes in -01</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-ikev2-key-exchange" class="internal xref">IKEv2 Key Exchange</a></p>
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-exchanges" class="internal xref">Exchanges</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
-                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-announcement" class="internal xref">Announcement</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1.2.1">
-                    <p id="section-toc.1-1.5.2.1.2.1.1"><a href="#section-5.1.1" class="auto internal xref">5.1.1</a>.  <a href="#name-sending-announcement" class="internal xref">Sending Announcement</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1.2.2">
-                    <p id="section-toc.1-1.5.2.1.2.2.1"><a href="#section-5.1.2" class="auto internal xref">5.1.2</a>.  <a href="#name-receiving-announcement" class="internal xref">Receiving Announcement</a></p>
-</li>
-                </ul>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
-                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-auth-cert-payload" class="internal xref">AUTH &amp; CERT payload</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.1">
-                    <p id="section-toc.1-1.5.2.2.2.1.1"><a href="#section-5.2.1" class="auto internal xref">5.2.1</a>.  <a href="#name-type-1" class="internal xref">Type-1</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.2">
-                    <p id="section-toc.1-1.5.2.2.2.2.1"><a href="#section-5.2.2" class="auto internal xref">5.2.2</a>.  <a href="#name-type-2" class="internal xref">Type-2</a></p>
-</li>
-                </ul>
-</li>
-            </ul>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-ikev2-key-exchange" class="internal xref">IKEv2 Key Exchange</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-exchanges" class="internal xref">Exchanges</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-announcement" class="internal xref">Announcement</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.1">
+                    <p id="section-toc.1-1.6.2.1.2.1.1"><a href="#section-6.1.1" class="auto internal xref">6.1.1</a>.  <a href="#name-sending-announcement" class="internal xref">Sending Announcement</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.2">
+                    <p id="section-toc.1-1.6.2.1.2.2.1"><a href="#section-6.1.2" class="auto internal xref">6.1.2</a>.  <a href="#name-receiving-announcement" class="internal xref">Receiving Announcement</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-auth-cert-payload" class="internal xref">AUTH &amp; CERT payload</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.1">
+                    <p id="section-toc.1-1.6.2.2.2.1.1"><a href="#section-6.2.1" class="auto internal xref">6.2.1</a>.  <a href="#name-type-1" class="internal xref">Type-1</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.2">
+                    <p id="section-toc.1-1.6.2.2.2.2.1"><a href="#section-6.2.2" class="auto internal xref">6.2.2</a>.  <a href="#name-type-2" class="internal xref">Type-2</a></p>
+</li>
+                </ul>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
 </section>
 </div>
-<div id="changes-in-01">
+<div id="change-in-02">
 <section id="section-1">
-      <h2 id="name-changes-in-01">
-<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-changes-in-01" class="section-name selfRef">Changes in -01</a>
+      <h2 id="name-change-in-02">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-change-in-02" class="section-name selfRef">Change in -02</a>
       </h2>
 <ul class="normal">
 <li class="normal" id="section-1-1.1">
-          <p id="section-1-1.1.1">Only use SUPPORTED_AUTH_METHODS for algorithm combination announcement, no longer use SIGNATURE_HASH_ALGORITHMS<a href="#section-1-1.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-1.1.1">clarify the approach in the document is general<a href="#section-1-1.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-1.2">
-          <p id="section-1-1.2.1">add flag field in the announcement<a href="#section-1-1.2.1" class="pilcrow">¶</a></p>
+          <p id="section-1-1.2.1">dropping support for PreHash ML-DSA, change example to Pure Signature ML-DSA<a href="#section-1-1.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-1.3">
-          <p id="section-1-1.3.1">clarify two types of PKI setup<a href="#section-1-1.3.1" class="pilcrow">¶</a></p>
+          <p id="section-1-1.3.1">adding more details in signing process to align with ietf-lamps-pq-composite-sigs-04<a href="#section-1-1.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-1.4">
-          <p id="section-1-1.4.1">add some clarifications on how AUTH payload is computed<a href="#section-1-1.4.1" class="pilcrow">¶</a></p>
+          <p id="section-1-1.4.1">add text in Security Considerations to emphasize prohibit of key reuse<a href="#section-1-1.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="changes-in-01">
+<section id="section-2">
+      <h2 id="name-changes-in-01">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-changes-in-01" class="section-name selfRef">Changes in -01</a>
+      </h2>
+<ul class="normal">
+<li class="normal" id="section-2-1.1">
+          <p id="section-2-1.1.1">Only use SUPPORTED_AUTH_METHODS for algorithm combination announcement, no longer use SIGNATURE_HASH_ALGORITHMS<a href="#section-2-1.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-1.2">
+          <p id="section-2-1.2.1">add flag field in the announcement<a href="#section-2-1.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-1.3">
+          <p id="section-2-1.3.1">clarify two types of PKI setup<a href="#section-2-1.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-1.4">
+          <p id="section-2-1.4.1">add some clarifications on how AUTH payload is computed<a href="#section-2-1.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
 <div id="introduction">
-<section id="section-2">
+<section id="section-3">
       <h2 id="name-introduction">
-<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-2-1">A Cryptographically Relevant Quantum Computer (CRQC) could break traditional asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. New Post-Quantum Cryptograph (PQC) algorithms for digital signature were recently published like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however consider potential flaws in the new algorithm's specifications and implementations, it will take time for these new PQC algorithms to be field proven. So it is risky to only use PQC algorithms before they are mature. There is more detailed discussion on motivation of a hybrid approach for authentication in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-00#section-1.3" class="relref">Section 1.3</a> of [<a href="#I-D.ietf-pquip-hybrid-signature-spectrums" class="cite xref">I-D.ietf-pquip-hybrid-signature-spectrums</a>]</span>.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<p id="section-2-2">This document describes an IKEv2 hybrid authentication scheme that contains both traditional and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.<a href="#section-2-2" class="pilcrow">¶</a></p>
-<p id="section-2-3">Each IPsec peer announce the support of hybrid authentication via SUPPORTED_AUTH_METHODS notification as defined in <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, generates and verifies AUTH payload using composite signature like the procedures defined in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>.<a href="#section-2-3" class="pilcrow">¶</a></p>
-<p id="section-2-4">Following two types of setup are covered:<a href="#section-2-4" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-2-5">
-<li id="section-2-5.1">
-          <p id="section-2-5.1.1">Type-1: A single certificate that has composite key as defined in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span><a href="#section-2-5.1.1" class="pilcrow">¶</a></p>
+<p id="section-3-1">A Cryptographically Relevant Quantum Computer (CRQC) could break traditional asymmetric cryptograph algorithms: e.g RSA, ECDSA; which are widely deployed authentication options of IKEv2. New Post-Quantum Cryptograph (PQC) algorithms for digital signature were recently published like NIST <span>[<a href="#ML-DSA" class="cite xref">ML-DSA</a>]</span>, however consider potential flaws in the new algorithm's specifications and implementations, it will take time for these new PQC algorithms to be field proven. So it is risky to only use PQC algorithms before they are mature. There is more detailed discussion on motivation of a hybrid approach for authentication in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-06#section-1.3" class="relref">Section 1.3</a> of [<a href="#I-D.ietf-pquip-hybrid-signature-spectrums" class="cite xref">I-D.ietf-pquip-hybrid-signature-spectrums</a>]</span>.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">This document describes an IKEv2 hybrid authentication scheme that contains both traditional and PQC algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">Each IPsec peer announce the support of hybrid authentication via SUPPORTED_AUTH_METHODS notification as defined in <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, generates and verifies AUTH payload using composite signature like the procedures defined in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">While only ML-DSA is specified as the PQC algorithm, the approach in this document could be a general framework that for all PQC and traditional algorithms.<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">Following two types of setup are covered:<a href="#section-3-5" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3-6">
+<li id="section-3-6.1">
+          <p id="section-3-6.1.1">Type-1: A single certificate that has composite key as defined in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span><a href="#section-3-6.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="section-2-5.2">
-          <p id="section-2-5.2.1">Type-2: Two certificates, one with traditional algorithm key and one with PQC algorithm key<a href="#section-2-5.2.1" class="pilcrow">¶</a></p>
+        <li id="section-3-6.2">
+          <p id="section-3-6.2.1">Type-2: Two certificates, one with traditional algorithm key and one with PQC algorithm key<a href="#section-3-6.2.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 </section>
 </div>
 <div id="conventions-and-definitions">
-<section id="section-3">
+<section id="section-4">
       <h2 id="name-conventions-and-definitions">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
       </h2>
-<p id="section-3-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+<p id="section-4-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
 "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
 described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
-appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">Cryptographically Relevant Quantum Computer (CRQC): A quantum computer that is capable of breaking real world cryptographic systems.<a href="#section-3-2" class="pilcrow">¶</a></p>
-<p id="section-3-3">Post-Quantum Cryptograph (PQC) algorithms: Asymmetric cryptograph algorithms are thought to be secure against CRQC.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">Traditional Cryptograph algorithms: Existing asymmetric cryptograph algorithms could be broken by CRQC, like RSA, ECDSA ..etc.<a href="#section-3-4" class="pilcrow">¶</a></p>
+appear in all capitals, as shown here.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">Cryptographically Relevant Quantum Computer (CRQC): A quantum computer that is capable of breaking real world cryptographic systems.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<p id="section-4-3">Post-Quantum Cryptograph (PQC) algorithms: Asymmetric cryptograph algorithms are thought to be secure against CRQC.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-4">Traditional Cryptograph algorithms: Existing asymmetric cryptograph algorithms could be broken by CRQC, like RSA, ECDSA ..etc.<a href="#section-4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="ikev2-key-exchange">
-<section id="section-4">
+<section id="section-5">
       <h2 id="name-ikev2-key-exchange">
-<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-ikev2-key-exchange" class="section-name selfRef">IKEv2 Key Exchange</a>
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-ikev2-key-exchange" class="section-name selfRef">IKEv2 Key Exchange</a>
       </h2>
-<p id="section-4-1">There is no changes introduced in this document to the IKEv2 key exchange process, although it <span class="bcp14">MUST</span> be also resilient to CRQC when using along with the PQ/T hybrid authentication, for example key exchange using the PPK as defined in <span>[<a href="#RFC8784" class="cite xref">RFC8784</a>]</span>, or hybrid key exchanges that include PQC algorithm via multiple key exchange process as defined in <span>[<a href="#RFC9370" class="cite xref">RFC9370</a>]</span>.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-5-1">There is no changes introduced in this document to the IKEv2 key exchange process, although it <span class="bcp14">MUST</span> be also resilient to CRQC when using along with the PQ/T hybrid authentication, for example key exchange using the PPK as defined in <span>[<a href="#RFC8784" class="cite xref">RFC8784</a>]</span>, or hybrid key exchanges that include PQC algorithm via multiple key exchange process as defined in <span>[<a href="#RFC9370" class="cite xref">RFC9370</a>]</span>.<a href="#section-5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="exchanges">
-<section id="section-5">
+<section id="section-6">
       <h2 id="name-exchanges">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-exchanges" class="section-name selfRef">Exchanges</a>
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-exchanges" class="section-name selfRef">Exchanges</a>
       </h2>
-<p id="section-5-1">The hybrid authentication exchanges is illustrated in an example depicted in <a href="#hybrid-auth-figure" class="auto internal xref">Figure 1</a>, the key exchange uses PPK, however it could be other key exchanges that involves PQC algorithm since how key exchange is done is transparent to authentication.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-6-1">The hybrid authentication exchanges is illustrated in an example depicted in <a href="#hybrid-auth-figure" class="auto internal xref">Figure 1</a>, the key exchange uses PPK, however it could be other key exchanges that involves PQC algorithm since how key exchange is done is transparent to authentication.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <span id="name-hybrid-authentication-excha"></span><div id="hybrid-auth-figure">
 <figure id="figure-1">
-        <div class="alignLeft art-text artwork" id="section-5-2.1">
+        <div class="alignLeft art-text artwork" id="section-6-2.1">
 <pre>
 Initiator                         Responder
 -------------------------------------------------------------------
@@ -1343,19 +1340,19 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
         </figcaption></figure>
 </div>
 <div id="announcement">
-<section id="section-5.1">
+<section id="section-6.1">
         <h3 id="name-announcement">
-<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-announcement" class="section-name selfRef">Announcement</a>
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-announcement" class="section-name selfRef">Announcement</a>
         </h3>
-<p id="section-5.1-1">Announcement of support hybrid authentication is through SUPPORTED_AUTH_METHODS notification as defined in <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, which includes a list of acceptable authentication methods announcements, this document defines a hybrid authentication announcements with following format:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-1">Announcement of support hybrid authentication is through SUPPORTED_AUTH_METHODS notification as defined in <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, which includes a list of acceptable authentication methods announcements, this document defines a hybrid authentication announcements with following format:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
 <span id="name-hybrid-authentication-annou"></span><div id="ds-announce">
 <figure id="figure-2">
-          <div class="alignLeft art-text artwork" id="section-5.1-2.1">
+          <div class="alignLeft art-text artwork" id="section-6.1-2.1">
 <pre>
                      1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|  Length (&gt;3)  |  Auth Method  |   Cert Link 1 | Alg 1 flag    |
+|  Length (&gt;=2) |  Auth Method  |   Cert Link 1 | Alg 1 flag    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 | Alg 1 Len     |                                               |
 +-+-+-+-+-+-+-+-+                                               |
@@ -1383,35 +1380,35 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 <a href="#name-hybrid-authentication-annou" class="selfRef">Hybrid Authentication Announcement</a>
           </figcaption></figure>
 </div>
-<p id="section-5.1-3">The announcement include a list of N algorithms could be used for hybrid signature<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">The announcement include a list of N algorithms could be used for hybrid signature<a href="#section-6.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1-4.1">
-            <p id="section-5.1-4.1.1">Auth Method: A new value to be allocated by IANA<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.1-4.1">
+            <p id="section-6.1-4.1.1">Auth Method: A new value to be allocated by IANA<a href="#section-6.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-4.2">
-            <p id="section-5.1-4.2.1">Cert Link N: Links corresponding signature algorithm N with a particular CA. as defined in <span><a href="https://rfc-editor.org/rfc/rfc9593#section-3.2.2" class="relref">Section 3.2.2</a> of [<a href="#RFC9593" class="cite xref">RFC9593</a>]</span><a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-6.1-4.2">
+            <p id="section-6.1-4.2.1">Cert Link N: Links corresponding signature algorithm N with a particular CA. as defined in <span><a href="https://rfc-editor.org/rfc/rfc9593#section-3.2.2" class="relref">Section 3.2.2</a> of [<a href="#RFC9593" class="cite xref">RFC9593</a>]</span><a href="#section-6.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.1-4.3">
-            <p id="section-5.1-4.3.1">Alg N Flag:<a href="#section-5.1-4.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-6.1-4.3">
+            <p id="section-6.1-4.3.1">Alg N Flag:<a href="#section-6.1-4.3.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1-4.3.2.1">
-                <p id="section-5.1-4.3.2.1.1">C: set to 1 if the algorithm could be used in type-1 setup<a href="#section-5.1-4.3.2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.1-4.3.2.1">
+                <p id="section-6.1-4.3.2.1.1">C: set to 1 if the algorithm could be used in type-1 setup<a href="#section-6.1-4.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-5.1-4.3.2.2">
-                <p id="section-5.1-4.3.2.2.1">S: set to 1 if the algorithm could be used in type-2 setup<a href="#section-5.1-4.3.2.2.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-6.1-4.3.2.2">
+                <p id="section-6.1-4.3.2.2.1">S: set to 1 if the algorithm could be used in type-2 setup<a href="#section-6.1-4.3.2.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-5.1-4.3.2.3">
-                <p id="section-5.1-4.3.2.3.1">C and S <span class="bcp14">MUST NOT</span> be zero at the same time<a href="#section-5.1-4.3.2.3.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-6.1-4.3.2.3">
+                <p id="section-6.1-4.3.2.3.1">C and S <span class="bcp14">MUST NOT</span> be zero at the same time<a href="#section-6.1-4.3.2.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-5.1-4.3.2.4">
-                <p id="section-5.1-4.3.2.4.1">RESERVED: set to 0<a href="#section-5.1-4.3.2.4.1" class="pilcrow">¶</a></p>
+              <li class="normal" id="section-6.1-4.3.2.4">
+                <p id="section-6.1-4.3.2.4.1">RESERVED: set to 0<a href="#section-6.1-4.3.2.4.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
         </ul>
 <span id="name-algorithm-flag"></span><div id="announce-flag">
 <figure id="figure-3">
-          <div class="alignLeft art-text artwork" id="section-5.1-5.1">
+          <div class="alignLeft art-text artwork" id="section-6.1-5.1">
 <pre>
      0 1 2 3 4 5 6 7
     +-+-+-+-+-+-+-+-+
@@ -1424,54 +1421,54 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
           </figcaption></figure>
 </div>
 <ul class="normal">
-<li class="normal" id="section-5.1-6.1">
-            <p id="section-5.1-6.1.1">AlgorithmIdentifier N: The variable-length ASN.1 object that is encoded using Distinguished Encoding Rules (DER) <span>[<a href="#X.690" class="cite xref">X.690</a>]</span> and identifies the  algorithm of a composite signature as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03#section-7" class="relref">Section 7</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>.<a href="#section-5.1-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.1-6.1">
+            <p id="section-6.1-6.1.1">AlgorithmIdentifier N: The variable-length ASN.1 object that is encoded using Distinguished Encoding Rules (DER) <span>[<a href="#X.690" class="cite xref">X.690</a>]</span> and identifies the  algorithm of a composite signature as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#section-7" class="relref">Section 7</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>.<a href="#section-6.1-6.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <div id="sending-announcement">
-<section id="section-5.1.1">
+<section id="section-6.1.1">
           <h4 id="name-sending-announcement">
-<a href="#section-5.1.1" class="section-number selfRef">5.1.1. </a><a href="#name-sending-announcement" class="section-name selfRef">Sending Announcement</a>
+<a href="#section-6.1.1" class="section-number selfRef">6.1.1. </a><a href="#name-sending-announcement" class="section-name selfRef">Sending Announcement</a>
           </h4>
-<p id="section-5.1.1-1">As defined in <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, responder include SUPPORTED_AUTH_METHODS in IKE_SA_INIT response (and potentially also in IKE_INTERMEDIATE response), while initiator include the notification in IKE_AUTH request.<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-2">Sender include a hybrid authentication announcement in SUPPORTED_AUTH_METHODS, which contains 0 or N composite signature AlgorithmIdentifiers sender accepts, each AlgorithmIdentifier identifies a combination of algorithms:<a href="#section-5.1.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-1">As defined in <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, responder include SUPPORTED_AUTH_METHODS in IKE_SA_INIT response (and potentially also in IKE_INTERMEDIATE response), while initiator include the notification in IKE_AUTH request.<a href="#section-6.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-2">Sender include a hybrid authentication announcement in SUPPORTED_AUTH_METHODS, which contains 0 or N composite signature AlgorithmIdentifiers sender accepts, each AlgorithmIdentifier identifies a combination of algorithms:<a href="#section-6.1.1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1.1-3.1">
-              <p id="section-5.1.1-3.1.1">a traditional PKI algorithm with corresponding hash algorithm (e.g. id-RSASA-PSS with id-sha256)<a href="#section-5.1.1-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.1.1-3.1">
+              <p id="section-6.1.1-3.1.1">a traditional PKI algorithm with corresponding hash algorithm (e.g. id-RSASA-PSS with id-sha256)<a href="#section-6.1.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.1.1-3.2">
-              <p id="section-5.1.1-3.2.1">a PQC algorithm (e.g. id-ML-DSA-44)<a href="#section-5.1.1-3.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-6.1.1-3.2">
+              <p id="section-6.1.1-3.2.1">a PQC algorithm (e.g. id-ML-DSA-44)<a href="#section-6.1.1-3.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.1.1-3.2.2.1">
-                  <p id="section-5.1.1-3.2.2.1.1">in case of Hash ML-DSA, there is also a pre-hash algorithm (e.g. id-sha256)<a href="#section-5.1.1-3.2.2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.1.1-3.2.2.1">
+                  <p id="section-6.1.1-3.2.2.1.1">in case of Hash ML-DSA, there is also a pre-hash algorithm (e.g. id-sha256)<a href="#section-6.1.1-3.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 </li>
           </ul>
-<p id="section-5.1.1-4">In case of type-2 setup, even though the certificate is not composite key certificate, system still uses a composite signature algorithm that corresponds to the combination of two certificates PKI algorithms and hash algorithm(s).<a href="#section-5.1.1-4" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-5">C and S bits in flag field are set according to whether sender accept the algorithm combination in type-1/type-2 setup.<a href="#section-5.1.1-5" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-6">Announcement without any AlgorithmIdentifiers signals that there is no particular restrictions on algorithm.<a href="#section-5.1.1-6" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-4">In case of type-2 setup, even though the certificate is not composite key certificate, system still uses a composite signature algorithm that corresponds to the combination of two certificates PKI algorithms and hash algorithm(s).<a href="#section-6.1.1-4" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-5">C and S bits in flag field are set according to whether sender accept the algorithm combination in type-1/type-2 setup.<a href="#section-6.1.1-5" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-6">Announcement without any AlgorithmIdentifiers signals that there is no particular restrictions on algorithm.<a href="#section-6.1.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="receiving-announcement">
-<section id="section-5.1.2">
+<section id="section-6.1.2">
           <h4 id="name-receiving-announcement">
-<a href="#section-5.1.2" class="section-number selfRef">5.1.2. </a><a href="#name-receiving-announcement" class="section-name selfRef">Receiving Announcement</a>
+<a href="#section-6.1.2" class="section-number selfRef">6.1.2. </a><a href="#name-receiving-announcement" class="section-name selfRef">Receiving Announcement</a>
           </h4>
-<p id="section-5.1.2-1">If hybrid authentication announcement is received, and receiver choose to authenticate itself using hybrid authentication, then based on its local policy and certificates, one AlgorithmIdentifier (which identify a combination of algorithms) in the hybrid authentication announcement and a PKI setup (type-1 or type-2) are chosen to create its AUTH and CERT payload(s).<a href="#section-5.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.1.2-1">If hybrid authentication announcement is received, and receiver choose to authenticate itself using hybrid authentication, then based on its local policy and certificates, one AlgorithmIdentifier (which identify a combination of algorithms) in the hybrid authentication announcement and a PKI setup (type-1 or type-2) are chosen to create its AUTH and CERT payload(s).<a href="#section-6.1.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="auth-cert-payload">
-<section id="section-5.2">
+<section id="section-6.2">
         <h3 id="name-auth-cert-payload">
-<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-auth-cert-payload" class="section-name selfRef">AUTH &amp; CERT payload</a>
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-auth-cert-payload" class="section-name selfRef">AUTH &amp; CERT payload</a>
         </h3>
-<p id="section-5.2-1">The IKEv2 AUTH payload has following format as defined in <span><a href="https://rfc-editor.org/rfc/rfc7296#section-3.8" class="relref">Section 3.8</a> of [<a href="#RFC7296" class="cite xref">RFC7296</a>]</span>:<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-1">The IKEv2 AUTH payload has following format as defined in <span><a href="https://rfc-editor.org/rfc/rfc7296#section-3.8" class="relref">Section 3.8</a> of [<a href="#RFC7296" class="cite xref">RFC7296</a>]</span>:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <span id="name-auth-payload"></span><div id="rfc7296-auth">
 <figure id="figure-4">
-          <div class="alignLeft art-text artwork" id="section-5.2-2.1">
+          <div class="alignLeft art-text artwork" id="section-6.2-2.1">
 <pre>
                         1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -1490,11 +1487,11 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 <a href="#name-auth-payload" class="selfRef">AUTH payload</a>
           </figcaption></figure>
 </div>
-<p id="section-5.2-3">For hybrid authentication, the AUTH Method has value defined in <a href="#announcement" class="auto internal xref">Section 5.1</a><a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<p id="section-5.2-4">The Authentication Data field follows format defined in <span><a href="https://rfc-editor.org/rfc/rfc7427#section-3" class="relref">Section 3</a> of [<a href="#RFC7427" class="cite xref">RFC7427</a>]</span>:<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+<p id="section-6.2-3">For hybrid authentication, the AUTH Method has value defined in <a href="#announcement" class="auto internal xref">Section 6.1</a><a href="#section-6.2-3" class="pilcrow">¶</a></p>
+<p id="section-6.2-4">The Authentication Data field follows format defined in <span><a href="https://rfc-editor.org/rfc/rfc7427#section-3" class="relref">Section 3</a> of [<a href="#RFC7427" class="cite xref">RFC7427</a>]</span>:<a href="#section-6.2-4" class="pilcrow">¶</a></p>
 <span id="name-authentication-data-in-hybr"></span><div id="ha-auth-data">
 <figure id="figure-5">
-          <div class="alignLeft art-text artwork" id="section-5.2-5.1">
+          <div class="alignLeft art-text artwork" id="section-6.2-5.1">
 <pre>
                        1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -1515,75 +1512,73 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 <a href="#name-authentication-data-in-hybr" class="selfRef">Authentication Data in hybrid AUTH payload</a>
           </figcaption></figure>
 </div>
-<p id="section-5.2-6">Based on selected AlgorithmIdentifier and setup type, the Signature Value is created via procedure defined in <a href="#type-1" class="auto internal xref">Section 5.2.1</a>, <a href="#type-2" class="auto internal xref">Section 5.2.2</a>.<a href="#section-5.2-6" class="pilcrow">¶</a></p>
+<p id="section-6.2-6">Based on selected AlgorithmIdentifier and setup type, the Signature Value is created via procedure defined in <a href="#type-1" class="auto internal xref">Section 6.2.1</a>, <a href="#type-2" class="auto internal xref">Section 6.2.2</a>.<a href="#section-6.2-6" class="pilcrow">¶</a></p>
 <div id="type-1">
-<section id="section-5.2.1">
+<section id="section-6.2.1">
           <h4 id="name-type-1">
-<a href="#section-5.2.1" class="section-number selfRef">5.2.1. </a><a href="#name-type-1" class="section-name selfRef">Type-1</a>
+<a href="#section-6.2.1" class="section-number selfRef">6.2.1. </a><a href="#name-type-1" class="section-name selfRef">Type-1</a>
           </h4>
-<p id="section-5.2.1-1">Assume selected AlgorithmIdentifier is A.<a href="#section-5.2.1-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.2.1-2">
-<li id="section-5.2.1-2.1">
-              <p id="section-5.2.1-2.1.1">There is no change on data to be signed, e.g. InitiatorSignedOctets/ResponderSignedOctets as defined in <span><a href="https://rfc-editor.org/rfc/rfc7296#section-2.15" class="relref">Section 2.15</a> of [<a href="#RFC7296" class="cite xref">RFC7296</a>]</span><a href="#section-5.2.1-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-6.2.1-1">Assume selected AlgorithmIdentifier is A.<a href="#section-6.2.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.1-2">
+<li id="section-6.2.1-2.1">
+              <p id="section-6.2.1-2.1.1">There is no change on data to be signed, e.g. InitiatorSignedOctets/ResponderSignedOctets as defined in <span><a href="https://rfc-editor.org/rfc/rfc7296#section-2.15" class="relref">Section 2.15</a> of [<a href="#RFC7296" class="cite xref">RFC7296</a>]</span><a href="#section-6.2.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-5.2.1-2.2">
-              <p id="section-5.2.1-2.2.1">Follow Sign operation identified by A, e.g. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span> or <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03#section-4.3.1" class="relref">Section 4.3.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>; the ctx input is the string of "IKEv2-PQT-Hybrid-Auth".<a href="#section-5.2.1-2.2.1" class="pilcrow">¶</a></p>
+            <li id="section-6.2.1-2.2">
+              <p id="section-6.2.1-2.2.1">Follow Sign operation identified by A, e.g. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>. the ctx input is the string of "IKEv2-PQT-Hybrid-Auth". this step outputs the composite signature, a CompositeSignatureValue.<a href="#section-6.2.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.2.1-2.3">
+              <p id="section-6.2.1-2.3.1">CompositeSignatureValue is serialized per <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#section-4.5" class="relref">Section 4.5</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>, the output is used as Signature Value in the Authentication Data field.<a href="#section-6.2.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
-<p id="section-5.2.1-3">Following is an initiator example:<a href="#section-5.2.1-3" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.2.1-4">
-<li id="section-5.2.1-4.1">
-              <p id="section-5.2.1-4.1.1">A is id-HashMLDSA44-RSA2048-PSS-SHA256, which uses Hash ML-DSA-44<a href="#section-5.2.1-4.1.1" class="pilcrow">¶</a></p>
+<p id="section-6.2.1-3">note: in case ML-DSA, only pure signature mode as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#section-4.2" class="relref">Section 4.2</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span> is used, the PreHash ML-DSA mode <span class="bcp14">MUST NOT</span> be used, see <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-dilithium-certificates-07#section-8.1" class="relref">Section 8.1</a> of [<a href="#I-D.ietf-lamps-dilithium-certificates" class="cite xref">I-D.ietf-lamps-dilithium-certificates</a>]</span> for the rationale.<a href="#section-6.2.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.2.1-4">Following is an initiator example:<a href="#section-6.2.1-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.1-5">
+<li id="section-6.2.1-5.1">
+              <p id="section-6.2.1-5.1.1">A is id-MLDSA44-RSA2048-PSS, which uses pure signature mode id-ML-DSA-44 and id-RSASSA-PSS with id-sha256<a href="#section-6.2.1-5.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-5.2.1-4.2">
-              <p id="section-5.2.1-4.2.1">Follow <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03#section-4.3.1" class="relref">Section 4.3.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span> with following input:<a href="#section-5.2.1-4.2.1" class="pilcrow">¶</a></p>
+            <li id="section-6.2.1-5.2">
+              <p id="section-6.2.1-5.2.1">Follow <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span> with following input:<a href="#section-6.2.1-5.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.2.1-4.2.2.1">
-                  <p id="section-5.2.1-4.2.2.1.1">sk is the private key of the signing composite key certificate<a href="#section-5.2.1-4.2.2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.2.1-5.2.2.1">
+                  <p id="section-6.2.1-5.2.2.1.1">sk is the private key of the signing composite key certificate<a href="#section-6.2.1-5.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
-                <li class="normal" id="section-5.2.1-4.2.2.2">
-                  <p id="section-5.2.1-4.2.2.2.1">M is InitiatorSignedOctets<a href="#section-5.2.1-4.2.2.2.1" class="pilcrow">¶</a></p>
+                <li class="normal" id="section-6.2.1-5.2.2.2">
+                  <p id="section-6.2.1-5.2.2.2.1">M is InitiatorSignedOctets<a href="#section-6.2.1-5.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
-                <li class="normal" id="section-5.2.1-4.2.2.3">
-                  <p id="section-5.2.1-4.2.2.3.1">ctx is "IKEv2-PQT-Hybrid-Auth"<a href="#section-5.2.1-4.2.2.3.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.2.1-4.2.2.4">
-                  <p id="section-5.2.1-4.2.2.4.1">PH is SHA256<a href="#section-5.2.1-4.2.2.4.1" class="pilcrow">¶</a></p>
+                <li class="normal" id="section-6.2.1-5.2.2.3">
+                  <p id="section-6.2.1-5.2.2.3.1">ctx is "IKEv2-PQT-Hybrid-Auth"<a href="#section-6.2.1-5.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 </li>
           </ol>
-<p id="section-5.2.1-5">The signing composite certificate <span class="bcp14">MUST</span> be the first CERT payload.<a href="#section-5.2.1-5" class="pilcrow">¶</a></p>
+<p id="section-6.2.1-6">The signing composite certificate <span class="bcp14">MUST</span> be the first CERT payload.<a href="#section-6.2.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="type-2">
-<section id="section-5.2.2">
+<section id="section-6.2.2">
           <h4 id="name-type-2">
-<a href="#section-5.2.2" class="section-number selfRef">5.2.2. </a><a href="#name-type-2" class="section-name selfRef">Type-2</a>
+<a href="#section-6.2.2" class="section-number selfRef">6.2.2. </a><a href="#name-type-2" class="section-name selfRef">Type-2</a>
           </h4>
-<p id="section-5.2.2-1">The procedure is same as Type-1, use private key of traditional and PQC certificate accordingly; e.g. in Sign procedure define in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>, the <code>mldsaSK</code> is the private key of ML-DSA certificate, while <code>tradSK</code> is the private key of traditional certificate.<a href="#section-5.2.2-1" class="pilcrow">¶</a></p>
-<p id="section-5.2.2-2">With the example in <a href="#type-1" class="auto internal xref">Section 5.2.1</a>:<a href="#section-5.2.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.2.2-1">The procedure is same as Type-1, use private key of traditional and PQC certificate accordingly; e.g. in Sign procedure define in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04#section-4.2.1" class="relref">Section 4.2.1</a> of [<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>, the <code>mldsaSK</code> is the private key of ML-DSA certificate, while <code>tradSK</code> is the private key of traditional certificate.<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2-2">With the example in <a href="#type-1" class="auto internal xref">Section 6.2.1</a>:<a href="#section-6.2.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.2.2-3.1">
-              <p id="section-5.2.2-3.1.1">mldsaSK is the private key of ML-DSA certificate, tradSK is the private key of the RSA certificate<a href="#section-5.2.2-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.2.2-3.1">
+              <p id="section-6.2.2-3.1.1">mldsaSK is the private key of ML-DSA certificate, tradSK is the private key of the RSA certificate<a href="#section-6.2.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.2.2-3.2">
-              <p id="section-5.2.2-3.2.1">M is InitiatorSignedOctets<a href="#section-5.2.2-3.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-6.2.2-3.2">
+              <p id="section-6.2.2-3.2.1">M is InitiatorSignedOctets<a href="#section-6.2.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5.2.2-3.3">
-              <p id="section-5.2.2-3.3.1">ctx is "IKEv2-PQT-Hybrid-Auth"<a href="#section-5.2.2-3.3.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-5.2.2-3.4">
-              <p id="section-5.2.2-3.4.1">PH is SHA256<a href="#section-5.2.2-3.4.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-6.2.2-3.3">
+              <p id="section-6.2.2-3.3.1">ctx is "IKEv2-PQT-Hybrid-Auth"<a href="#section-6.2.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-5.2.2-4">The signing PQC certificate <span class="bcp14">MUST</span> be the first CERT payload in the IKEv2 message, while traditional certificate <span class="bcp14">MUST</span> be the second CERT payload.<a href="#section-5.2.2-4" class="pilcrow">¶</a></p>
+<p id="section-6.2.2-4">The signing PQC certificate <span class="bcp14">MUST</span> be the first CERT payload in the IKEv2 message, while traditional certificate <span class="bcp14">MUST</span> be the second CERT payload.<a href="#section-6.2.2-4" class="pilcrow">¶</a></p>
 <div id="relatedcertificate">
-<section id="section-5.2.2.1">
+<section id="section-6.2.2.1">
             <h5 id="name-relatedcertificate">
-<a href="#section-5.2.2.1" class="section-number selfRef">5.2.2.1. </a><a href="#name-relatedcertificate" class="section-name selfRef">RelatedCertificate</a>
+<a href="#section-6.2.2.1" class="section-number selfRef">6.2.2.1. </a><a href="#name-relatedcertificate" class="section-name selfRef">RelatedCertificate</a>
             </h5>
-<p id="section-5.2.2.1-1">In type-2 setup, the signing certificate <span class="bcp14">MAY</span> contain RelatedCertificate extension, then the receiver <span class="bcp14">SHOULD</span> verify the extension according to <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-cert-binding-for-multi-auth-05#section-4.2" class="relref">Section 4.2</a> of [<a href="#I-D.ietf-lamps-cert-binding-for-multi-auth" class="cite xref">I-D.ietf-lamps-cert-binding-for-multi-auth</a>]</span>, failed verification <span class="bcp14">SHOULD</span> fail authentication.<a href="#section-5.2.2.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.1-1">In type-2 setup, the signing certificate <span class="bcp14">MAY</span> contain RelatedCertificate extension, then the receiver <span class="bcp14">SHOULD</span> verify the extension according to <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-cert-binding-for-multi-auth-06#section-4.2" class="relref">Section 4.2</a> of [<a href="#I-D.ietf-lamps-cert-binding-for-multi-auth" class="cite xref">I-D.ietf-lamps-cert-binding-for-multi-auth</a>]</span>, failed verification <span class="bcp14">SHOULD</span> fail authentication.<a href="#section-6.2.2.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1593,44 +1588,49 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 </section>
 </div>
 <div id="security-considerations">
-<section id="section-6">
+<section id="section-7">
       <h2 id="name-security-considerations">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-6-1">The security of general PQ/T hybrid authentication is discussed in <span>[<a href="#I-D.ietf-pquip-hybrid-signature-spectrums" class="cite xref">I-D.ietf-pquip-hybrid-signature-spectrums</a>]</span>.<a href="#section-6-1" class="pilcrow">¶</a></p>
-<p id="section-6-2">This document uses mechanisms defined in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>, <span>[<a href="#RFC7427" class="cite xref">RFC7427</a>]</span> and <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, the security discussion in the corresponding RFCs also apply.<a href="#section-6-2" class="pilcrow">¶</a></p>
+<p id="section-7-1">The security of general PQ/T hybrid authentication is discussed in <span>[<a href="#I-D.ietf-pquip-hybrid-signature-spectrums" class="cite xref">I-D.ietf-pquip-hybrid-signature-spectrums</a>]</span>.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">This document uses mechanisms defined in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span>, <span>[<a href="#RFC7427" class="cite xref">RFC7427</a>]</span> and <span>[<a href="#RFC9593" class="cite xref">RFC9593</a>]</span>, the security discussion in the corresponding RFCs also apply.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<p id="section-7-3">One important security consideration mentioned in <span>[<a href="#I-D.ietf-lamps-pq-composite-sigs" class="cite xref">I-D.ietf-lamps-pq-composite-sigs</a>]</span> worth repeating here is that component key used in either <a href="#type-1" class="auto internal xref">Section 6.2.1</a> or <a href="#type-2" class="auto internal xref">Section 6.2.2</a> <span class="bcp14">MUST NOT</span> be reused in any other cases including single-algorithm case.<a href="#section-7-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-7">
+<section id="section-8">
       <h2 id="name-iana-considerations">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-7-1">This document requests a value in "IKEv2 Authentication Method" subregistry under IANA "Internet Key Exchange Version 2 (IKEv2) Parameters" registry<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-8-1">This document requests a value in "IKEv2 Authentication Method" subregistry under IANA "Internet Key Exchange Version 2 (IKEv2) Parameters" registry<a href="#section-8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-8">
+<section id="section-9">
       <h2 id="name-references">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-8.1">
+<section id="section-9.1">
         <h3 id="name-normative-references">
-<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="I-D.ietf-lamps-cert-binding-for-multi-auth">[I-D.ietf-lamps-cert-binding-for-multi-auth]</dt>
         <dd>
-<span class="refAuthor">Becker, A.</span>, <span class="refAuthor">Guthrie, R.</span>, and <span class="refAuthor">M. J. Jenkins</span>, <span class="refTitle">"Related Certificates for Use in Multiple Authentications within a Protocol"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-cert-binding-for-multi-auth-05</span>, <time datetime="2024-04-29" class="refDate">29 April 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-cert-binding-for-multi-auth-05">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-cert-binding-for-multi-auth-05</a>&gt;</span>. </dd>
+<span class="refAuthor">Becker, A.</span>, <span class="refAuthor">Guthrie, R.</span>, and <span class="refAuthor">M. J. Jenkins</span>, <span class="refTitle">"Related Certificates for Use in Multiple Authentications within a Protocol"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-cert-binding-for-multi-auth-06</span>, <time datetime="2024-12-10" class="refDate">10 December 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-cert-binding-for-multi-auth-06">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-cert-binding-for-multi-auth-06</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-lamps-dilithium-certificates">[I-D.ietf-lamps-dilithium-certificates]</dt>
+        <dd>
+<span class="refAuthor">Massimo, J.</span>, <span class="refAuthor">Kampanakis, P.</span>, <span class="refAuthor">Turner, S.</span>, and <span class="refAuthor">B. Westerbaan</span>, <span class="refTitle">"Internet X.509 Public Key Infrastructure: Algorithm Identifiers for ML-DSA"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-dilithium-certificates-07</span>, <time datetime="2025-02-02" class="refDate">2 February 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-dilithium-certificates-07">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-dilithium-certificates-07</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-lamps-pq-composite-sigs">[I-D.ietf-lamps-pq-composite-sigs]</dt>
         <dd>
-<span class="refAuthor">Ounsworth, M.</span>, <span class="refAuthor">Gray, J.</span>, <span class="refAuthor">Pala, M.</span>, <span class="refAuthor">Klaußner, J.</span>, and <span class="refAuthor">S. Fluhrer</span>, <span class="refTitle">"Composite ML-DSA For use in X.509 Public Key Infrastructure and CMS"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-pq-composite-sigs-03</span>, <time datetime="2024-10-21" class="refDate">21 October 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-03</a>&gt;</span>. </dd>
+<span class="refAuthor">Ounsworth, M.</span>, <span class="refAuthor">Gray, J.</span>, <span class="refAuthor">Pala, M.</span>, <span class="refAuthor">Klaußner, J.</span>, and <span class="refAuthor">S. Fluhrer</span>, <span class="refTitle">"Composite ML-DSA for use in X.509 Public Key Infrastructure and CMS"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-pq-composite-sigs-04</span>, <time datetime="2025-03-03" class="refDate">3 March 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-pq-composite-sigs-04</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-pquip-hybrid-signature-spectrums">[I-D.ietf-pquip-hybrid-signature-spectrums]</dt>
         <dd>
-<span class="refAuthor">Bindel, N.</span>, <span class="refAuthor">Hale, B.</span>, <span class="refAuthor">Connolly, D.</span>, and <span class="refAuthor">F. D</span>, <span class="refTitle">"Hybrid signature spectrums"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-pquip-hybrid-signature-spectrums-00</span>, <time datetime="2024-05-24" class="refDate">24 May 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-00">https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-00</a>&gt;</span>. </dd>
+<span class="refAuthor">Bindel, N.</span>, <span class="refAuthor">Hale, B.</span>, <span class="refAuthor">Connolly, D.</span>, and <span class="refAuthor">F. D</span>, <span class="refTitle">"Hybrid signature spectrums"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-pquip-hybrid-signature-spectrums-06</span>, <time datetime="2025-01-09" class="refDate">9 January 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-06">https://datatracker.ietf.org/doc/html/draft-ietf-pquip-hybrid-signature-spectrums-06</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
@@ -1660,9 +1660,9 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-8.2">
+<section id="section-9.2">
         <h3 id="name-informative-references">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="ML-DSA">[ML-DSA]</dt>
@@ -1711,6 +1711,15 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 <div class="email">
 <span>Email:</span>
 <a href="mailto:yasufumi.morioka.dt@nttdocomo.com" class="email">yasufumi.morioka.dt@nttdocomo.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Wang, Guilin</span></div>
+<div dir="auto" class="left"><span class="org">Huawei</span></div>
+<div dir="auto" class="left"><span class="country-name">Singapore</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:Wang.Guilin@huawei.com" class="email">Wang.Guilin@huawei.com</a>
 </div>
 </address>
 </section>
