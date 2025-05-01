@@ -5,10 +5,10 @@
 ipsecme                                                           H. Jun
 Internet-Draft                                                     Nokia
 Intended status: Standards Track                              Y. Morioka
-Expires: 24 October 2025                                NTT DOCOMO, INC.
+Expires: 2 November 2025                                NTT DOCOMO, INC.
                                                                W. Guilin
                                                                   Huawei
-                                                           22 April 2025
+                                                              1 May 2025
 
 
     Post-Quantum Traditional (PQ/T) Hybrid PKI Authentication in the
@@ -61,7 +61,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 24 October 2025.
+   This Internet-Draft will expire on 2 November 2025.
 
 Copyright Notice
 
@@ -476,9 +476,8 @@ Table of Contents
               Westerbaan, "Internet X.509 Public Key Infrastructure:
               Algorithm Identifiers for ML-DSA", Work in Progress,
               Internet-Draft, draft-ietf-lamps-dilithium-certificates-
-              07, 2 February 2025,
-              <https://datatracker.ietf.org/doc/html/draft-ietf-lamps-
-              dilithium-certificates-07>.
+              08, 25 April 2025, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-lamps-dilithium-certificates-08>.
 
    [I-D.ietf-lamps-pq-composite-sigs]
               Ounsworth, M., Gray, J., Pala, M., Klaußner, J., and S.
