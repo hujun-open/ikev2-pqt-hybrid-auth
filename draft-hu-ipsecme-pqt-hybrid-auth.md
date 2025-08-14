@@ -59,8 +59,13 @@ author:
     organization: Huawei
     email: Wang.Guilin@huawei.com
     country: Singapore
-
-
+ -
+    fullname: Tirumaleswar Reddy
+    organization: Nokia
+    city: Bangalore
+    region: Karnataka
+    country: India
+    email: "kondtir@gmail.com"
 
 normative:
   I-D.ietf-lamps-pq-composite-sigs:
@@ -330,6 +335,33 @@ The signing PQC certificate MUST be the first CERT payload in the IKEv2 message,
 #### RelatedCertificate
 In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver SHOULD verify the extension according to {{Section 4.2 of I-D.ietf-lamps-cert-binding-for-multi-auth}}, failed verification SHOULD fail authentication.
 
+# Certificate Chain Delimitation for Type-2 Authentication
+
+The IKEv2 protocol, as defined in {{RFC7296}}, assumes a single-algorithm authentication model. As explained in Section 3.6, the sender's AUTH payload is validated using the public key in the first CERT payload, while subsequent CERT payloads are treated as intermediate certificates in a single chain.
+
+In contrast, Type-2 hybrid authentication requires the validation of two distinct signatures within the AUTH payload, each corresponding to a different cryptographic algorithm. This necessitates the exchange of two separate end-entity certificates and their respective chains. 
+
+For Type-2 hybrid authentication, an IKE_AUTH message contains two distinct certificate chains, with each certificate sent in a separate CERT payload. Without a clear delimiter, concatenating the two chains would be ambiguous, as the receiving peer could not reliably identify which CERT payload contains the end-entity certificate for the second signature. To avoid this ambiguity and ensure interoperability, this document specifies a method to clearly delimit the two chains.
+
+A new Notify Payload with the CERT_CHAIN_DELIMITER message type is used for this purpose. This is a status type notification with an empty Notification Data field.
+
+The IKE_AUTH message structure for Type-2 hybrid authentication MUST follow this order:
+
+~~~~~~~~~~~
+IKE_AUTH -> IDi, AUTH, CERT*, CERT_CHAIN_DELIMITER, CERT*, [CP], [SA], [TSi, TSr]
+~~~~~~~~~~~
+
+* CERT (first instance): The series of CERT payloads for the first certificate chain (end-entity and intermediates).  
+* CERT_CHAIN_DELIMITER: The Notify Payload delimiter.  
+* CERT (second instance): The series of CERT payloads for the second certificate chain (end-entity and intermediates).  
+
+In the CERT_CHAIN_DELIMITER Notify Payload: 
+
+* Protocol-ID: MUST be set to 0, as this notification is not specific to any protocol (e.g., AH or ESP).  
+* SPI Size: MUST be set to 0, indicating that no SPI field is included in this notification.  
+* Notification Data : MUST be empty. 
+
+Implementations MUST correctly process the delimiter to identify the separation of the two chains.
 
 # Security Considerations
 
@@ -344,6 +376,12 @@ One important security consideration mentioned in {{I-D.ietf-lamps-pq-composite-
 
 This document requests a value in "IKEv2 Authentication Method" subregistry under IANA "Internet Key Exchange Version 2 (IKEv2) Parameters" registry
 
+IANA is requested to assign a new Notify Message Type from the "IKEv2 Notify Message Status Types" range for IKEv2, as follows:
+
+## CERT_CHAIN_DELIMITER
+
+* Notify Message Type Name: CERT_CHAIN_DELIMITER  
+* Value: To be assigned by IANA from the Status Types range  
 
 --- back
 
