@@ -101,7 +101,12 @@ informative:
 
 --- middle
 
-# Change in -02
+
+# changes in -03
+
+* version bump to keep doc alive
+
+# Changes in -02
 
 * clarify the approach in the document is general
 * dropping support for PreHash ML-DSA, change example to Pure Signature ML-DSA
