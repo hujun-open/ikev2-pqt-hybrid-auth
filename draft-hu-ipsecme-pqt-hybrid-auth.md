@@ -103,7 +103,7 @@ informative:
 
 # changes in -04
 
-* align to draft-ietf-lamps-pq-composite-sigs-14 
+* align to draft-ietf-lamps-pq-composite-sigs-14
 * clarify using of pre-hash alg
 * clarify sign operator in type-2
 * ietf-lamps-cert-binding-for-multi-auth is now RFC9763
@@ -336,7 +336,7 @@ The procedure is similar to Type-1:
 Note: {{Section 6 of RFC9881}} defines 3 options for ML-DSA private key storage, this document requires options that include seed since Sign operation of {{I-D.ietf-lamps-pq-composite-sigs}} only supports seed.
 
 With example in {{type-1}}:
-  
+
   - sk is the combined private key, e.g. output of SerializePrivateKey
   - M is InitiatorSignedOctets
   - ctx is "IKEv2-PQT-Hybrid-Auth"
