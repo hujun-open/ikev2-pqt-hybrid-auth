@@ -65,8 +65,8 @@ author:
 normative:
   I-D.ietf-lamps-pq-composite-sigs:
   I-D.ietf-pquip-hybrid-signature-spectrums:
-  I-D.ietf-lamps-cert-binding-for-multi-auth:
-  I-D.ietf-lamps-dilithium-certificates:
+  RFC9763:
+  RFC9881:
   RFC7296:
   RFC7427:
   RFC9593:
@@ -100,6 +100,14 @@ informative:
 
 
 --- middle
+
+# changes in -04
+
+* align to draft-ietf-lamps-pq-composite-sigs-14 
+* clarify using of pre-hash alg
+* clarify sign operator in type-2
+* ietf-lamps-cert-binding-for-multi-auth is now RFC9763
+* ietf-lamps-dilithium-certificates is now RFC9881
 
 
 # changes in -03
@@ -236,11 +244,11 @@ The announcement includes a list of N algorithms could be used for hybrid signat
 
 As defined in {{RFC9593}}, responder includes SUPPORTED_AUTH_METHODS in IKE_SA_INIT response (and potentially also in IKE_INTERMEDIATE response), while initiator includes the notification in IKE_AUTH request.
 
-Sender includes a hybrid authentication announcement in SUPPORTED_AUTH_METHODS, which contains 0 or N composite signature AlgorithmIdentifiers sender accepts, each AlgorithmIdentifier identifies a combination of algorithms:
+Sender includes a hybrid authentication announcement in SUPPORTED_AUTH_METHODS, which contains 0 or N composite signature AlgorithmIdentifiers sender accepts, each AlgorithmIdentifier identifies a combination of algorithms as specified in {{Section 6 of I-D.ietf-lamps-pq-composite-sigs}}:
 
-* a traditional PKI algorithm with corresponding hash algorithm (e.g. id-RSASA-PSS with id-sha256)
+* a traditional PKI algorithm (e.g. id-RSASA-PSS)
 * a PQC algorithm (e.g. id-ML-DSA-44)
-  * in case of Hash ML-DSA, there is also a pre-hash algorithm (e.g. id-sha256)
+* a pre-hash algorithm (e.g. id-sha256)
 
 In case of type-2 setup, even though the certificate is not composite key certificate, system still uses a composite signature algorithm that corresponds to the combination of two certificates PKI algorithms and hash algorithm(s).
 
@@ -301,15 +309,15 @@ Based on selected AlgorithmIdentifier and setup type, the Signature Value is cre
 Assume selected AlgorithmIdentifier is A.
 
 1. There is no change on data to be signed, e.g. InitiatorSignedOctets/ResponderSignedOctets as defined in {{Section 2.15 of RFC7296}}
-2. Follow Sign operation identified by A, e.g. {{Section 4.2.1 of I-D.ietf-lamps-pq-composite-sigs}}. the ctx input is the string of "IKEv2-PQT-Hybrid-Auth". this step outputs the composite signature, a CompositeSignatureValue.
-3. CompositeSignatureValue is serialized per {{Section 4.5 of I-D.ietf-lamps-pq-composite-sigs}}, the output is used as Signature Value in the Authentication Data field.
+2. Follow Sign operation identified by A, e.g. {{Section 3.2 of I-D.ietf-lamps-pq-composite-sigs}}. the ctx input is the string of "IKEv2-PQT-Hybrid-Auth". this step outputs the composite signature, a CompositeSignatureValue.
+3. CompositeSignatureValue is serialized per {{Section 4.3 of I-D.ietf-lamps-pq-composite-sigs}}, the output is used as Signature Value in the Authentication Data field.
 
-note: in case ML-DSA, only pure signature mode as defined in {{Section 4.2 of I-D.ietf-lamps-pq-composite-sigs}} is used, the PreHash ML-DSA mode MUST NOT be used, see {{Section 8.1 of I-D.ietf-lamps-dilithium-certificates}} for the rationale.
+note: {{I-D.ietf-lamps-pq-composite-sigs}} uses a pre-hash algorithm with {{ML-DSA}} pure mode (Algorithm 2), the HashML-DSA as defined in {{ML-DSA}} is not used. see {{Section 2.1 of I-D.ietf-lamps-pq-composite-sigs}} for the rationale.
 
 Following is an initiator example:
 
-1. A is id-MLDSA44-RSA2048-PSS, which uses pure signature mode id-ML-DSA-44 and id-RSASSA-PSS with id-sha256
-2. Follow {{Section 4.2.1 of I-D.ietf-lamps-pq-composite-sigs}} with following input:
+1. A is id-MLDSA44-RSA2048-PSS-SHA256, which uses PQC ML-DSA-44 and traditional RSASSA-PSS with pre-hash function SHA256
+2. Follow {{Section 3.2 of I-D.ietf-lamps-pq-composite-sigs}} with following input:
 
     - sk is the private key of the signing composite key certificate
     - M is InitiatorSignedOctets
@@ -320,11 +328,16 @@ The signing composite certificate MUST be the first CERT payload.
 
 ### Type-2
 
-The procedure is same as Type-1, use private key of traditional and PQC certificate accordingly; e.g. in Sign procedure define in {{Section 4.2.1 of I-D.ietf-lamps-pq-composite-sigs}}, the `mldsaSK` is the private key of ML-DSA certificate, while `tradSK` is the private key of traditional certificate.
+The procedure is similar to Type-1:
 
-With the example in {{type-1}}:
+1. Combine PQC key and traditional key into composite key using SerializePrivateKey operation as defined in {{Section 4.2 of I-D.ietf-lamps-pq-composite-sigs}}.
+2. Follow Sign operation as {{type-1}}
 
-  - mldsaSK is the private key of ML-DSA certificate, tradSK is the private key of the RSA certificate
+Note: {{Section 6 of RFC9881}} defines 3 options for ML-DSA private key storage, this document requires options that include seed since Sign operation of {{I-D.ietf-lamps-pq-composite-sigs}} only supports seed.
+
+With example in {{type-1}}:
+  
+  - sk is the combined private key, e.g. output of SerializePrivateKey
   - M is InitiatorSignedOctets
   - ctx is "IKEv2-PQT-Hybrid-Auth"
 
@@ -333,7 +346,7 @@ The signing PQC certificate MUST be the first CERT payload in the IKEv2 message,
 
 
 #### RelatedCertificate
-In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver SHOULD verify the extension according to {{Section 4.2 of I-D.ietf-lamps-cert-binding-for-multi-auth}}, failed verification SHOULD fail authentication.
+In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver SHOULD verify the extension according to {{Section 4.2 of RFC9763}}, failed verification SHOULD fail authentication.
 
 
 # Security Considerations
