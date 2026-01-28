@@ -5,10 +5,10 @@
 ipsecme                                                           H. Jun
 Internet-Draft                                                     Nokia
 Intended status: Standards Track                              Y. Morioka
-Expires: 2 November 2025                                NTT DOCOMO, INC.
+Expires: 1 August 2026                                  NTT DOCOMO, INC.
                                                                W. Guilin
                                                                   Huawei
-                                                              1 May 2025
+                                                         28 January 2026
 
 
     Post-Quantum Traditional (PQ/T) Hybrid PKI Authentication in the
@@ -61,11 +61,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 November 2025.
+   This Internet-Draft will expire on 1 August 2026.
 
 Copyright Notice
 
-   Copyright (c) 2025 IETF Trust and the persons identified as the
+   Copyright (c) 2026 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -79,27 +79,45 @@ Copyright Notice
 
 Table of Contents
 
-   1.  Change in -02
-   2.  Changes in -01
-   3.  Introduction
-   4.  Conventions and Definitions
-   5.  IKEv2 Key Exchange
-   6.  Exchanges
-     6.1.  Announcement
-       6.1.1.  Sending Announcement
-       6.1.2.  Receiving Announcement
-     6.2.  AUTH & CERT payload
-       6.2.1.  Type-1
-       6.2.2.  Type-2
-   7.  Security Considerations
-   8.  IANA Considerations
-   9.  References
-     9.1.  Normative References
-     9.2.  Informative References
+   1.  changes in -04
+   2.  changes in -03
+   3.  Changes in -02
+   4.  Changes in -01
+   5.  Introduction
+   6.  Conventions and Definitions
+   7.  IKEv2 Key Exchange
+   8.  Exchanges
+     8.1.  Announcement
+       8.1.1.  Sending Announcement
+       8.1.2.  Receiving Announcement
+     8.2.  AUTH & CERT payload
+       8.2.1.  Type-1
+       8.2.2.  Type-2
+   9.  Security Considerations
+   10. IANA Considerations
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
-1.  Change in -02
+1.  changes in -04
+
+   *  align to draft-ietf-lamps-pq-composite-sigs-14
+
+   *  clarify using of pre-hash alg
+
+   *  clarify sign operator in type-2
+
+   *  ietf-lamps-cert-binding-for-multi-auth is now RFC9763
+
+   *  ietf-lamps-dilithium-certificates is now RFC9881
+
+2.  changes in -03
+
+   *  version bump to keep doc alive
+
+3.  Changes in -02
 
    *  clarify the approach in the document is general
 
@@ -119,7 +137,7 @@ Table of Contents
 
    *  typo fixes
 
-2.  Changes in -01
+4.  Changes in -01
 
    *  Only use SUPPORTED_AUTH_METHODS for algorithm combination
       announcement, no longer use SIGNATURE_HASH_ALGORITHMS
@@ -130,7 +148,7 @@ Table of Contents
 
    *  add some clarifications on how AUTH payload is computed
 
-3.  Introduction
+5.  Introduction
 
    A Cryptographically Relevant Quantum Computer (CRQC) could break
    traditional asymmetric cryptographic algorithms: e.g RSA, ECDSA;
@@ -166,7 +184,7 @@ Table of Contents
    2.  Type-2: Two certificates, one with traditional algorithm key and
        one with PQC algorithm key
 
-4.  Conventions and Definitions
+6.  Conventions and Definitions
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
@@ -185,7 +203,7 @@ Table of Contents
    Cryptographic algorithms could be broken by CRQC, like RSA, ECDSA
    ..etc.
 
-5.  IKEv2 Key Exchange
+7.  IKEv2 Key Exchange
 
    There is no changes introduced in this document to the IKEv2 key
    exchange process, although it MUST be also resilient to CRQC when
@@ -194,7 +212,7 @@ Table of Contents
    exchanges that includes PQC algorithm via multiple key exchange
    process as defined in [RFC9370].
 
-6.  Exchanges
+8.  Exchanges
 
    The hybrid authentication exchanges is illustrated in an example
    depicted in Figure 1, using PPK as defined in [RFC8784] during key
@@ -218,7 +236,7 @@ Table of Contents
 
     Figure 1: Hybrid Authentication Exchanges with RFC8784 Key Exchange
 
-6.1.  Announcement
+8.1.  Announcement
 
    Announcement of support hybrid authentication is through
    SUPPORTED_AUTH_METHODS notification as defined in [RFC9593], which
@@ -285,7 +303,7 @@ Table of Contents
       identifies the algorithm of a composite signature as defined in
       Section 7 of [I-D.ietf-lamps-pq-composite-sigs].
 
-6.1.1.  Sending Announcement
+8.1.1.  Sending Announcement
 
    As defined in [RFC9593], responder includes SUPPORTED_AUTH_METHODS in
    IKE_SA_INIT response (and potentially also in IKE_INTERMEDIATE
@@ -295,15 +313,14 @@ Table of Contents
    Sender includes a hybrid authentication announcement in
    SUPPORTED_AUTH_METHODS, which contains 0 or N composite signature
    AlgorithmIdentifiers sender accepts, each AlgorithmIdentifier
-   identifies a combination of algorithms:
+   identifies a combination of algorithms as specified in Section 6 of
+   [I-D.ietf-lamps-pq-composite-sigs]:
 
-   *  a traditional PKI algorithm with corresponding hash algorithm
-      (e.g. id-RSASA-PSS with id-sha256)
+   *  a traditional PKI algorithm (e.g. id-RSASA-PSS)
 
    *  a PQC algorithm (e.g. id-ML-DSA-44)
 
-      -  in case of Hash ML-DSA, there is also a pre-hash algorithm
-         (e.g. id-sha256)
+   *  a pre-hash algorithm (e.g. id-sha256)
 
    In case of type-2 setup, even though the certificate is not composite
    key certificate, system still uses a composite signature algorithm
@@ -316,7 +333,7 @@ Table of Contents
    Announcement without any AlgorithmIdentifiers signals that there is
    no particular restrictions on algorithm.
 
-6.1.2.  Receiving Announcement
+8.1.2.  Receiving Announcement
 
    If hybrid authentication announcement is received, and receiver
    chooses to authenticate itself using hybrid authentication, then
@@ -327,7 +344,7 @@ Table of Contents
    AlgorithmIdentifier in the announcement, receiver MAY choose
    AlgorithmIdentifier just base on its local policy and certificates.
 
-6.2.  AUTH & CERT payload
+8.2.  AUTH & CERT payload
 
    The IKEv2 AUTH payload has following format as defined in Section 3.8
    of [RFC7296]:
@@ -347,7 +364,7 @@ Table of Contents
                            Figure 4: AUTH payload
 
    For hybrid authentication, the AUTH Method has value defined in
-   Section 6.1
+   Section 8.1
 
    The Authentication Data field follows format defined in Section 3 of
    [RFC7427]:
@@ -369,10 +386,10 @@ Table of Contents
             Figure 5: Authentication Data in hybrid AUTH payload
 
    Based on selected AlgorithmIdentifier and setup type, the Signature
-   Value is created via procedure defined in Section 6.2.1,
-   Section 6.2.2.
+   Value is created via procedure defined in Section 8.2.1,
+   Section 8.2.2.
 
-6.2.1.  Type-1
+8.2.1.  Type-1
 
    Assume selected AlgorithmIdentifier is A.
 
@@ -380,26 +397,26 @@ Table of Contents
        InitiatorSignedOctets/ResponderSignedOctets as defined in
        Section 2.15 of [RFC7296]
 
-   2.  Follow Sign operation identified by A, e.g. Section 4.2.1 of
+   2.  Follow Sign operation identified by A, e.g. Section 3.2 of
        [I-D.ietf-lamps-pq-composite-sigs]. the ctx input is the string
        of "IKEv2-PQT-Hybrid-Auth". this step outputs the composite
        signature, a CompositeSignatureValue.
 
-   3.  CompositeSignatureValue is serialized per Section 4.5 of
+   3.  CompositeSignatureValue is serialized per Section 4.3 of
        [I-D.ietf-lamps-pq-composite-sigs], the output is used as
        Signature Value in the Authentication Data field.
 
-   note: in case ML-DSA, only pure signature mode as defined in
-   Section 4.2 of [I-D.ietf-lamps-pq-composite-sigs] is used, the
-   PreHash ML-DSA mode MUST NOT be used, see Section 8.1 of
-   [I-D.ietf-lamps-dilithium-certificates] for the rationale.
+   note: [I-D.ietf-lamps-pq-composite-sigs] uses a pre-hash algorithm
+   with [ML-DSA] pure mode (Algorithm 2), the HashML-DSA as defined in
+   [ML-DSA] is not used. see Section 2.1 of
+   [I-D.ietf-lamps-pq-composite-sigs] for the rationale.
 
    Following is an initiator example:
 
-   1.  A is id-MLDSA44-RSA2048-PSS, which uses pure signature mode id-
-       ML-DSA-44 and id-RSASSA-PSS with id-sha256
+   1.  A is id-MLDSA44-RSA2048-PSS-SHA256, which uses PQC ML-DSA-44 and
+       traditional RSASSA-PSS with pre-hash function SHA256
 
-   2.  Follow Section 4.2.1 of [I-D.ietf-lamps-pq-composite-sigs] with
+   2.  Follow Section 3.2 of [I-D.ietf-lamps-pq-composite-sigs] with
        following input:
 
        *  sk is the private key of the signing composite key certificate
@@ -410,18 +427,23 @@ Table of Contents
 
    The signing composite certificate MUST be the first CERT payload.
 
-6.2.2.  Type-2
+8.2.2.  Type-2
 
-   The procedure is same as Type-1, use private key of traditional and
-   PQC certificate accordingly; e.g. in Sign procedure define in
-   Section 4.2.1 of [I-D.ietf-lamps-pq-composite-sigs], the mldsaSK is
-   the private key of ML-DSA certificate, while tradSK is the private
-   key of traditional certificate.
+   The procedure is similar to Type-1:
 
-   With the example in Section 6.2.1:
+   1.  Combine PQC key and traditional key into composite key using
+       SerializePrivateKey operation as defined in Section 4.2 of
+       [I-D.ietf-lamps-pq-composite-sigs].
 
-   *  mldsaSK is the private key of ML-DSA certificate, tradSK is the
-      private key of the RSA certificate
+   2.  Follow Sign operation as Section 8.2.1
+
+   Note: Section 6 of [RFC9881] defines 3 options for ML-DSA private key
+   storage, this document requires options that include seed since Sign
+   operation of [I-D.ietf-lamps-pq-composite-sigs] only supports seed.
+
+   With example in Section 8.2.1:
+
+   *  sk is the combined private key, e.g. output of SerializePrivateKey
 
    *  M is InitiatorSignedOctets
 
@@ -431,15 +453,14 @@ Table of Contents
    IKEv2 message, while traditional certificate MUST be the second CERT
    payload.
 
-6.2.2.1.  RelatedCertificate
+8.2.2.1.  RelatedCertificate
 
    In type-2 setup, the signing certificate MAY contain
    RelatedCertificate extension, then the receiver SHOULD verify the
-   extension according to Section 4.2 of
-   [I-D.ietf-lamps-cert-binding-for-multi-auth], failed verification
+   extension according to Section 4.2 of [RFC9763], failed verification
    SHOULD fail authentication.
 
-7.  Security Considerations
+9.  Security Considerations
 
    The security of general PQ/T hybrid authentication is discussed in
    [I-D.ietf-pquip-hybrid-signature-spectrums].
@@ -450,49 +471,33 @@ Table of Contents
 
    One important security consideration mentioned in
    [I-D.ietf-lamps-pq-composite-sigs] worth repeating here is that
-   component key used in either Section 6.2.1 or Section 6.2.2 MUST NOT
+   component key used in either Section 8.2.1 or Section 8.2.2 MUST NOT
    be reused in any other cases including single-algorithm case.
 
-8.  IANA Considerations
+10.  IANA Considerations
 
    This document requests a value in "IKEv2 Authentication Method"
    subregistry under IANA "Internet Key Exchange Version 2 (IKEv2)
    Parameters" registry
 
-9.  References
+11.  References
 
-9.1.  Normative References
-
-   [I-D.ietf-lamps-cert-binding-for-multi-auth]
-              Becker, A., Guthrie, R., and M. J. Jenkins, "Related
-              Certificates for Use in Multiple Authentications within a
-              Protocol", Work in Progress, Internet-Draft, draft-ietf-
-              lamps-cert-binding-for-multi-auth-06, 10 December 2024,
-              <https://datatracker.ietf.org/doc/html/draft-ietf-lamps-
-              cert-binding-for-multi-auth-06>.
-
-   [I-D.ietf-lamps-dilithium-certificates]
-              Massimo, J., Kampanakis, P., Turner, S., and B.
-              Westerbaan, "Internet X.509 Public Key Infrastructure:
-              Algorithm Identifiers for ML-DSA", Work in Progress,
-              Internet-Draft, draft-ietf-lamps-dilithium-certificates-
-              08, 25 April 2025, <https://datatracker.ietf.org/doc/html/
-              draft-ietf-lamps-dilithium-certificates-08>.
+11.1.  Normative References
 
    [I-D.ietf-lamps-pq-composite-sigs]
               Ounsworth, M., Gray, J., Pala, M., Klaußner, J., and S.
               Fluhrer, "Composite ML-DSA for use in X.509 Public Key
-              Infrastructure and CMS", Work in Progress, Internet-Draft,
-              draft-ietf-lamps-pq-composite-sigs-04, 3 March 2025,
+              Infrastructure", Work in Progress, Internet-Draft, draft-
+              ietf-lamps-pq-composite-sigs-14, 7 January 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-lamps-
-              pq-composite-sigs-04>.
+              pq-composite-sigs-14>.
 
    [I-D.ietf-pquip-hybrid-signature-spectrums]
               Bindel, N., Hale, B., Connolly, D., and F. D, "Hybrid
               signature spectrums", Work in Progress, Internet-Draft,
-              draft-ietf-pquip-hybrid-signature-spectrums-06, 9 January
+              draft-ietf-pquip-hybrid-signature-spectrums-07, 20 June
               2025, <https://datatracker.ietf.org/doc/html/draft-ietf-
-              pquip-hybrid-signature-spectrums-06>.
+              pquip-hybrid-signature-spectrums-07>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -518,13 +523,25 @@ Table of Contents
               RFC 9593, DOI 10.17487/RFC9593, July 2024,
               <https://www.rfc-editor.org/rfc/rfc9593>.
 
+   [RFC9763]  Becker, A., Guthrie, R., and M. Jenkins, "Related
+              Certificates for Use in Multiple Authentications within a
+              Protocol", RFC 9763, DOI 10.17487/RFC9763, June 2025,
+              <https://www.rfc-editor.org/rfc/rfc9763>.
+
+   [RFC9881]  Massimo, J., Kampanakis, P., Turner, S., and B. E.
+              Westerbaan, "Internet X.509 Public Key Infrastructure --
+              Algorithm Identifiers for the Module-Lattice-Based Digital
+              Signature Algorithm (ML-DSA)", RFC 9881,
+              DOI 10.17487/RFC9881, October 2025,
+              <https://www.rfc-editor.org/rfc/rfc9881>.
+
    [X.690]    "Information Technology - ASN.1 encoding rules:
               Specification of Basic Encoding Rules (BER), Canonical
               Encoding Rules (CER) and Distinguished Encoding Rules
               (DER)", ISO/IEC 8825-1:2021 (E), ITU-T Recommendation
               X.690, February 2021.
 
-9.2.  Informative References
+11.2.  Informative References
 
    [ML-DSA]   "Module-Lattice-Based Digital Signature Standard", NIST 
               FIPS-204, State Initial Public Draft, August 2023,
