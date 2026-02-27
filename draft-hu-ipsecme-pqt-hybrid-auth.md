@@ -45,7 +45,7 @@ venue:
 
 author:
  -
-    fullname: Hu, Jun
+    fullname: Jun Hu
     organization: Nokia
     email: jun.hu@nokia.com
     country: United States of America
@@ -55,7 +55,7 @@ author:
     email: yasufumi.morioka.dt@nttdocomo.com
     country: Japan
  -
-    fullname: Wang, Guilin
+    fullname: Guilin Wang
     organization: Huawei
     email: Wang.Guilin@huawei.com
     country: Singapore
@@ -101,7 +101,7 @@ informative:
 
 --- abstract
 
- One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on traditional asymmetric cryptographic algorithms: e.g RSA, ECDSA, which are widely deployed authentication options of IKEv2. There are new Post-Quantum Cryptographic (PQC) algorithms for digital signature like NIST {{ML-DSA}}, however, it takes time for new cryptographic algorithms to mature, so there is security risk to use only the new algorithm before it is field proven. This document describes a hybrid PKI authentication scheme for IKEv2 that incorporates both traditional and PQC digital signature algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.
+ One IPsec area that would be impacted by Cryptographically Relevant Quantum Computer (CRQC) is IKEv2 authentication based on traditional asymmetric cryptographic algorithms: e.g RSA, ECDSA, which are widely deployed authentication options of IKEv2. There are new Post-Quantum Cryptographic (PQC) algorithms for digital signature like NIST {{ML-DSA}}, However, it takes time for new cryptographic algorithms to mature, There is security risk to use only the new algorithm before it is field proven. This document describes a hybrid PKI authentication scheme for IKEv2 that incorporates both traditional and PQC digital signature algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.
 
 
 --- middle
@@ -145,7 +145,7 @@ informative:
 
 # Introduction
 
-A Cryptographically Relevant Quantum Computer (CRQC) could break traditional asymmetric cryptographic algorithms: e.g RSA, ECDSA. which are widely deployed authentication options of IKEv2. New Post-Quantum Cryptographic (PQC) algorithms for digital signature were recently published like NIST {{ML-DSA}}, however, by considering potential flaws in the new algorithm's specifications and implementations, it will take time for these new PQC algorithms to be field proven. So it is risky to only use PQC algorithms before they are mature. There is more detailed discussion on motivation of a hybrid approach for authentication in {{Section 1.2 of I-D.ietf-pquip-hybrid-signature-spectrums}}.
+A Cryptographically Relevant Quantum Computer (CRQC) could break traditional asymmetric cryptographic algorithms: e.g RSA, ECDSA, which are widely deployed authentication options of IKEv2. New Post-Quantum Cryptographic (PQC) algorithms for digital signature were recently published like NIST {{ML-DSA}}, However, by considering potential flaws in the new algorithm's specifications and implementations, it will take time for these new PQC algorithms to be field proven. So it is risky to only use PQC algorithms before they are mature. There is more detailed discussion on motivation of a hybrid approach for authentication in {{Section 1.2 of I-D.ietf-pquip-hybrid-signature-spectrums}}.
 
 This document describes a post-quantum traditional (PQ/T) hybrid digital signature authentication scheme for IKEv2 that incorporates both traditional and PQC digital signature algorithms, so that authentication is secure as long as one algorithm in the hybrid scheme is secure.
 
@@ -155,10 +155,10 @@ The approach specified in this document is a general framework for all PQC and t
 
 There are two types of PQ/T hybrid PKI setup:
 
-1. Type-1: A single certificate that has a composite key as defined in {{I-D.ietf-lamps-pq-composite-sigs}}, the composite key contains two component keys: one traditional key + one PQC key.
-2. Type-2: Two certificates, one certificate with traditional algorithm key and one certificate with PQC algorithm key as described in {{RFC9763}}, each certificate MAY contain RelatedCertificate extension to associate with the other certificate.
+1. Type-1: A single certificate that has a composite key as defined in {{I-D.ietf-lamps-pq-composite-sigs}}, which contains two component keys: one traditional key + one PQC key.
+2. Type-2: Two certificates, one certificate with traditional algorithm key and one certificate with PQC algorithm key as described in {{RFC9763}}, Each certificate MAY contain RelatedCertificate extension to associate with the other certificate.
 
-A given deployment could use either type to provide PQ/T hybrid PKI, this document supports both types.
+A given deployment could use either type to provide PQ/T hybrid PKI. This document supports both types.
 
 # Conventions and Definitions
 
@@ -176,7 +176,7 @@ There is no changes introduced in this document to the IKEv2 key exchange proces
 
 # Exchanges
 
-The hybrid authentication exchanges is illustrated in an example depicted in {{hybrid-auth-figure}}, using PPK as defined in {{RFC8784}} during key exchange. however, other PQC key exchanges could also be used since how key exchange is done is independent from authentication.
+The hybrid authentication exchanges is illustrated in an example depicted in {{hybrid-auth-figure}}, using PPK as defined in {{RFC8784}} during key exchange. However, other PQC key exchanges could also be used since how key exchange is done is independent from authentication.
 
 ~~~~~~~~~~~
 Initiator                         Responder
@@ -195,15 +195,15 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 ~~~~~~~~~~~
 {: #hybrid-auth-figure title="Hybrid Authentication Exchanges with RFC8784 Key Exchange"}
 
-1. Responder announces the hybrid authentication support via SUPPORTED_AUTH_METHODS notification in IKE_SA_INIT response message, the notification includes the combinations of PQC, traditional, hash algorithm and type of hybrid PKI setup that responder supports.
+1. Responder announces the hybrid authentication support via SUPPORTED_AUTH_METHODS notification in IKE_SA_INIT response message. The notification includes the combinations of PQC, traditional, hash algorithm and type of hybrid PKI setup that responder supports.
 
-2. Initiator chooses a combination from responder's SUPPORTED_AUTH_METHODS, use the combination to generate the AUTH payload, along with corresponding signing certificate(s) in CERT payload(s), and includes its support of hybrid combinations in SUPPORTED_AUTH_METHODS notification of IKE_AUTH request message.
+2. Initiator chooses a combination from responder's SUPPORTED_AUTH_METHODS, uses the combination to generate the AUTH payload, along with corresponding signing certificate(s) in CERT payload(s), and includes its support of hybrid combinations in SUPPORTED_AUTH_METHODS notification of IKE_AUTH request message.
 
-3. Responder chooses a combination from initiator's SUPPORTED_AUTH_METHODS, use the combination to generate the AUTH payload, include corresponding signing certificate(s) in CERT payload(s) of IKE_AUTH response message.
+3. Responder chooses a combination from initiator's SUPPORTED_AUTH_METHODS, uses the combination to generate the AUTH payload, and includes corresponding signing certificate(s) in CERT payload(s) of IKE_AUTH response message.
 
 ## Announcement
 
-Announcement of support hybrid authentication is through SUPPORTED_AUTH_METHODS notification as defined in {{RFC9593}}, which includes a list of acceptable authentication methods announcements. this document defines a hybrid authentication announcement with following format:
+Announcement of support hybrid authentication is through SUPPORTED_AUTH_METHODS notification as defined in {{RFC9593}}, which includes a list of acceptable authentication methods announcements. This document defines a hybrid authentication announcement with following format:
 
 
                          1                   2                   3
@@ -264,7 +264,7 @@ The sender includes a hybrid authentication announcement in SUPPORTED_AUTH_METHO
 * a PQC algorithm (e.g. id-ML-DSA-44)
 * a pre-hash algorithm (e.g. id-sha256)
 
-In case of type-2 setup, even though the certificate is not composite key certificate, system still uses a composite signature algorithm that corresponds to the combination of two certificates PKI algorithms and hash algorithm(s).
+In case of type-2 setup, even though the certificate is not a composite key certificate, system still uses a composite signature algorithm that corresponds to the combination of two certificates PKI algorithms and hash algorithm(s).
 
 C and S bits in flag field are set according to whether sender accepts the algorithm combination in type-1/type-2 setup.
 
@@ -272,7 +272,9 @@ Announcement without any AlgorithmIdentifiers signals that there is no particula
 
 ### Receiving Announcement
 
-If hybrid authentication announcement is received, and the receiver chooses to authenticate itself using hybrid authentication, then based on its local policy and certificates, one AlgorithmIdentifier (which identifies a combination of algorithms) in the hybrid authentication announcement and a PKI setup (type-1 or type-2) is chosen to create its AUTH and CERT payload(s). If there is no AlgorithmIdentifier in the announcement, the receiver MAY choose AlgorithmIdentifier just according to its local policy and certificates.
+If hybrid authentication announcement is received, and the receiver chooses to authenticate itself using hybrid authentication, then based on its local policy and certificates, one AlgorithmIdentifier (which identifies a combination of algorithms) in the hybrid authentication announcement and a PKI setup (type-1 or type-2) is chosen to create its AUTH and CERT payload(s).
+
+If there is no AlgorithmIdentifier in the announcement, the receiver MAY choose AlgorithmIdentifier just according to its local policy and certificates.
 
 
 
@@ -323,15 +325,15 @@ Based on selected AlgorithmIdentifier and setup type, the Signature Value is cre
 Assume selected AlgorithmIdentifier is A.
 
 1. There is no change on data to be signed, e.g. InitiatorSignedOctets/ResponderSignedOctets as defined in {{Section 2.15 of RFC7296}}
-2. Follow Sign operation identified by A, e.g. {{Section 3.2 of I-D.ietf-lamps-pq-composite-sigs}}. the ctx input is the string of "IKEv2-PQT-Hybrid-Auth". this step outputs the composite signature, a CompositeSignatureValue.
-3. CompositeSignatureValue is serialized per {{Section 4.3 of I-D.ietf-lamps-pq-composite-sigs}}, the output is used as Signature Value in the Authentication Data field.
+2. Follow Sign operation identified by A, e.g. {{Section 3.2 of I-D.ietf-lamps-pq-composite-sigs}}. The ctx input is the string of "IKEv2-PQT-Hybrid-Auth". This step outputs the composite signature, a CompositeSignatureValue.
+3. CompositeSignatureValue is serialized per {{Section 4.3 of I-D.ietf-lamps-pq-composite-sigs}}, and the output is used as Signature Value in the Authentication Data field.
 
-note: {{I-D.ietf-lamps-pq-composite-sigs}} uses a pre-hash algorithm with {{ML-DSA}} pure mode (Algorithm 2), not the HashML-DSA as defined in {{ML-DSA}}, see {{Section 2.1 of I-D.ietf-lamps-pq-composite-sigs}} for the rationale.
+Note: {{I-D.ietf-lamps-pq-composite-sigs}} uses a pre-hash algorithm with {{ML-DSA}} pure mode (Algorithm 2), not the HashML-DSA as defined in {{ML-DSA}}, see {{Section 2.1 of I-D.ietf-lamps-pq-composite-sigs}} for the rationale.
 
 Following is an initiator example:
 
 1. A is id-MLDSA44-RSA2048-PSS-SHA256, which uses PQC ML-DSA-44 and traditional RSASSA-PSS with pre-hash function SHA256
-2. Follow {{Section 3.2 of I-D.ietf-lamps-pq-composite-sigs}} with following input:
+2. Follow {{Section 3.2 of I-D.ietf-lamps-pq-composite-sigs}} with following inputs:
 
     - sk is the private key of the signing composite key certificate
     - M is InitiatorSignedOctets
@@ -358,7 +360,7 @@ The signing PQC certificate MUST be the first CERT payload in the IKEv2 message,
 
 
 #### RelatedCertificate
-In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver SHOULD verify the extension according to {{Section 4.2 of RFC9763}}, failed verification SHOULD fail authentication.
+In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver SHOULD verify the extension according to {{Section 4.2 of RFC9763}}. Failed verification SHOULD fail authentication.
 
 
 # Security Considerations
