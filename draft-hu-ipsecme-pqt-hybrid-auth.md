@@ -202,79 +202,58 @@ HDR, SK {IDi, CERT+, [CERTREQ,]
 3. Responder chooses a combination from initiator's SUPPORTED_AUTH_METHODS, uses the combination to generate the AUTH payload, and includes corresponding signing certificate(s) in CERT payload(s) of IKE_AUTH response message.
 
 ## Announcement
+{: #announcement}
 
-Announcement of support hybrid authentication is through SUPPORTED_AUTH_METHODS notification as defined in {{RFC9593}}, which includes a list of acceptable authentication methods announcements. This document defines a hybrid authentication announcement with following format:
+Announcement of support for hybrid authentication is through the SUPPORTED_AUTH_METHODS notification as defined in {{RFC9593}}, using multi-octet announcements. This document uses the existing multi-octet announcement format from {{RFC9593}} with the following AUTH_METHOD values:
 
+1. For type-1 (composite key certificate): use AUTH_METHOD value 14 (Digital Signature, as defined in {{RFC7427}}) together with the composite signature AlgorithmIdentifier as defined in {{Section 7 of I-D.ietf-lamps-pq-composite-sigs}}.
 
+2. For type-2 (two separate certificates): use a new IANA-assigned AUTH_METHOD value together with the composite signature AlgorithmIdentifier corresponding to the combination of the two certificates.
+
+There is no change to the existing multi-octet announcement protocol format defined in {{RFC9593}}. The only new protocol element introduced by this document is the new IANA-assigned AUTH_METHOD value for type-2.
+
+For example, if a system supports the following authentication configurations:
+
+* A: MLDSA44 + RSA2048_PSS as type-1
+* B: MLDSA44 + ECDSA-P256 as type-1
+* C: MLDSA44 + RSA2048_PSS as type-2
+
+It will include 3 multi-octet announcements in the SUPPORTED_AUTH_METHODS payload:
+
+* Auth-method 14 with AlgorithmIdentifier id-MLDSA44-RSA2048-PSS-SHA256, for A above
+* Auth-method 14 with AlgorithmIdentifier id-MLDSA44-ECDSA-P256-SHA256, for B above
+* Auth-method NEW_VAL_for_TYPE2 with AlgorithmIdentifier id-MLDSA44-RSA2048-PSS-SHA256, for C above
+
+~~~~~~~~~~~
                          1                   2                   3
      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |  Length (>=2) |  Auth Method  |   Cert Link 1 | Alg 1 flag    |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    | Alg 1 Len     |                                               |
-    +-+-+-+-+-+-+-+-+                                               |
-    ~                      AlgorithmIdentifier 1                    ~
-    |                                                               |
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    | Cert Link 2   | Alg 2 flag    |  Alg 2 Len    |               |
+    |  Length (>3)  |      14       |   Cert Link   |               |  <- A
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               +
     |                                                               |
-    ~                      AlgorithmIdentifier 2                    ~
+    ~          id-MLDSA44-RSA2048-PSS-SHA256 (AlgorithmIdentifier)  ~
     |                                                               |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |                                                               |
-    ~                      ...                                      ~
-    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    | Cert Link 3   | Alg 3 flag    |  Alg 3 Len    |               |
+    |  Length (>3)  |      14       |   Cert Link   |               |  <- B
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               +
     |                                                               |
-    ~                      AlgorithmIdentifier N                    ~
+    ~          id-MLDSA44-ECDSA-P256-SHA256 (AlgorithmIdentifier)   ~
     |                                                               |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-{: #ds-announce title="Hybrid Authentication Announcement"}
-
-The announcement includes a list of N algorithms could be used for hybrid signature
-
-* Auth Method: A new value to be allocated by IANA
-* Cert Link N: Links corresponding signature algorithm N with a particular CA, as defined in {{Section 3.2.2 of RFC9593}}
-* Alg N Flag:
-  * C: set to 1 if the algorithm could be used in type-1 setup
-  * S: set to 1 if the algorithm could be used in type-2 setup
-  * Both C and S MAY be set to 1 but MUST NOT set to zero at the same time
-  * RESERVED: set to 0
-
+    |  Length (>3)  | NEW_VAL_TYPE2 |   Cert Link   |               |  <- C
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               +
+    |                                                               |
+    ~          id-MLDSA44-RSA2048-PSS-SHA256 (AlgorithmIdentifier)  ~
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~~~~~~~~~
-     0 1 2 3 4 5 6 7
-    +-+-+-+-+-+-+-+-+
-    |C|S| RESERVED  |
-    +-+-+-+-+-+-+-+-+
-~~~~~~~~~~~
-{: #announce-flag title="Algorithm Flag"}
+{: #sam-payload title="Example SUPPORTED_AUTH_METHODS Payload with 3 Announcements"}
 
-* AlgorithmIdentifier N: The variable-length ASN.1 object that is encoded using Distinguished Encoding Rules (DER) {{X.690}} and identifies the  algorithm of a composite signature as defined in {{Section 7 of I-D.ietf-lamps-pq-composite-sigs}}.
+Each AlgorithmIdentifier is the variable-length ASN.1 object encoded using Distinguished Encoding Rules (DER) {{X.690}} that identifies a composite signature algorithm as defined in {{Section 7 of I-D.ietf-lamps-pq-composite-sigs}}, specifying a combination of:
 
-
-### Sending Announcement
-
-As defined in {{RFC9593}}, the responder includes SUPPORTED_AUTH_METHODS in IKE_SA_INIT response (and potentially also in IKE_INTERMEDIATE response), while the initiator includes the notification in IKE_AUTH request.
-
-The sender includes a hybrid authentication announcement in SUPPORTED_AUTH_METHODS, which contains 0 or N composite signature AlgorithmIdentifiers sender accepts. Each AlgorithmIdentifier identifies a combination of algorithms as specified in {{Section 6 of I-D.ietf-lamps-pq-composite-sigs}}:
-
-* a traditional PKI algorithm (e.g. id-RSASA-PSS)
 * a PQC algorithm (e.g. id-ML-DSA-44)
+* a traditional PKI algorithm (e.g. id-RSASA-PSS)
 * a pre-hash algorithm (e.g. id-sha256)
-
-In case of type-2 setup, even though the certificate is not a composite key certificate, system still uses a composite signature algorithm that corresponds to the combination of two certificates PKI algorithms and hash algorithm(s).
-
-C and S bits in flag field are set according to whether sender accepts the algorithm combination in type-1/type-2 setup.
-
-Announcement without any AlgorithmIdentifiers signals that there is no particular restrictions on algorithm.
-
-### Receiving Announcement
-
-If hybrid authentication announcement is received, and the receiver chooses to authenticate itself using hybrid authentication, then based on its local policy and certificates, one AlgorithmIdentifier (which identifies a combination of algorithms) in the hybrid authentication announcement and a PKI setup (type-1 or type-2) is chosen to create its AUTH and CERT payload(s).
-
-If there is no AlgorithmIdentifier in the announcement, the receiver MAY choose AlgorithmIdentifier just according to its local policy and certificates.
 
 
 
@@ -297,7 +276,7 @@ The IKEv2 AUTH payload has following format as defined in {{Section 3.8 of RFC72
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 {: #rfc7296-auth title="AUTH payload"}
 
-For hybrid authentication, the AUTH Method has value defined in {{announcement}}
+For hybrid authentication, the Auth Method is either value 14 (Digital Signature) for type-1 or the new IANA-assigned value for type-2, as defined in {{announcement}}
 
 The Authentication Data field follows format defined in {{Section 3 of RFC7427}}:
 
@@ -374,7 +353,7 @@ One important security consideration mentioned in {{I-D.ietf-lamps-pq-composite-
 
 # IANA Considerations
 
-This document requests a value in "IKEv2 Authentication Method" subregistry under IANA "Internet Key Exchange Version 2 (IKEv2) Parameters" registry
+This document requests a new value in the "IKEv2 Authentication Method" subregistry under the IANA "Internet Key Exchange Version 2 (IKEv2) Parameters" registry for the type-2 (two-certificate) PQ/T hybrid authentication method. Type-1 (composite key certificate) hybrid authentication reuses the existing AUTH_METHOD value 14 (Digital Signature) and requires no new IANA allocation.
 
 
 --- back
