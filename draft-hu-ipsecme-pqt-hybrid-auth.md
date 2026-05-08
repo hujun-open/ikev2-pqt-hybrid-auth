@@ -108,6 +108,17 @@ informative:
 
 # Change log
 
+## changes in -05
+
+* rework announcement section to reuse RFC9593 existing multi-octet format; no protocol format changes
+* add Certificate Request section for type-1 and type-2 CERTREQ payload usage
+* add Verification subsection with step-by-step AUTH payload verification procedure
+* add Downgrade Attack Prevention subsection in Security Considerations
+* strengthen RelatedCertificate verification from SHOULD to MUST
+* update IANA Considerations to clarify only type-2 needs a new IANA AUTH_METHOD value
+* editorial changes
+
+
 ## changes in -04
 
 * align to draft-ietf-lamps-pq-composite-sigs-14
@@ -208,7 +219,7 @@ Announcement of support for hybrid authentication is through the SUPPORTED_AUTH_
 
 1. For type-1 (composite key certificate): use AUTH_METHOD value 14 (Digital Signature, as defined in {{RFC7427}}) together with the composite signature AlgorithmIdentifier as defined in {{Section 7 of I-D.ietf-lamps-pq-composite-sigs}}.
 
-2. For type-2 (two separate certificates): use a new IANA-assigned AUTH_METHOD value together with the composite signature AlgorithmIdentifier corresponding to the combination of the two certificates.
+2. For type-2 (two separate certificates): use a new IANA-assigned AUTH_METHOD value together with the composite signature AlgorithmIdentifier corresponding to the combination of the two certificates. If the Cert Link field contains a non-zero value N, it means the method is intended to be used with the N-th and N+1-th trust anchor CA from the Certificate Request payload(s). see {{certreq_type_2}} for more details.
 
 There is no change to the existing multi-octet announcement protocol format defined in {{RFC9593}}. The only new protocol element introduced by this document is the new IANA-assigned AUTH_METHOD value for type-2.
 
@@ -256,6 +267,21 @@ Each AlgorithmIdentifier is the variable-length ASN.1 object encoded using Disti
 * a pre-hash algorithm (e.g. id-sha256)
 
 
+## Certificate Request
+{: #certreq}
+
+This section describes how peers use Certificate Request (CERTREQ) payloads when performing hybrid authentication.
+
+### Type-1
+{: #certreq_type_1}
+
+For type-1 hybrid authentication, a single CERTREQ payload MAY be sent referencing the CA that issued the composite certificate. The CERTREQ uses the standard hash-of-CA-public-key format as defined in {{Section 3.7 of RFC7296}}.
+
+### Type-2
+{: #certreq_type_2}
+
+For type-2 hybrid authentication, two CERTREQ payloads MAY be sent: the first hash refer to the PQC certificate CA (issuer of the PQC certificate), and directly follow by the hash refer to traditional certificate CA (issuer of the traditional certificate).
+
 
 
 ## AUTH & CERT payload
@@ -297,10 +323,11 @@ The Authentication Data field follows format defined in {{Section 3 of RFC7427}}
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 {: #ha-auth-data title="Authentication Data in hybrid AUTH payload"}
 
-Based on selected AlgorithmIdentifier and setup type, the Signature Value is created via procedure defined in {{type-1}}, {{type-2}}.
+Based on selected AlgorithmIdentifier and setup type, the Signature Value is created via procedure defined in {{auth_type_1}}, {{auth_type_2}}.
 
 
 ### Type-1
+{: #auth_type_1}
 Assume selected AlgorithmIdentifier is A.
 
 1. There is no change on data to be signed, e.g. InitiatorSignedOctets/ResponderSignedOctets as defined in {{Section 2.15 of RFC7296}}
@@ -322,24 +349,54 @@ Following is an initiator example:
 The signing composite certificate MUST be the first CERT payload.
 
 ### Type-2
+{: #auth_type_2}
 
 1. Combine PQC key and traditional key into composite key using SerializePrivateKey operation as defined in {{Section 4.2 of I-D.ietf-lamps-pq-composite-sigs}}.
-2. Follow Sign operation as {{type-1}}
+2. Follow Sign operation as {{auth_type_1}}
 
 Note: {{Section 6 of RFC9881}} defines 3 options for ML-DSA private key storage, this document requires options that include seed since Sign operation of {{I-D.ietf-lamps-pq-composite-sigs}} only supports seed.
 
-With example in {{type-1}}:
+With example in {{auth_type_1}}:
 
   - sk is the combined private key, e.g. output of SerializePrivateKey
   - M is InitiatorSignedOctets
-  - ctx is "IKEv2-PQT-Hybrid-Auth"
+  - ctx is "IKEv2-PQT-Hybrid-Auth" (21 octets, no null terminator)
 
 The signing PQC certificate MUST be the first CERT payload in the IKEv2 message, while traditional certificate MUST be the second CERT payload.
 
 
 
 #### RelatedCertificate
-In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver SHOULD verify the extension according to {{Section 4.2 of RFC9763}}. Failed verification SHOULD fail authentication.
+In type-2 setup, the signing certificate MAY contain RelatedCertificate extension, then the receiver MUST verify the extension according to {{Section 4.2 of RFC9763}}. Failed verification MUST cause authentication to fail.
+
+### Verification
+{: #verification}
+
+This section specifies how a receiver verifies the hybrid AUTH payload produced by the signing procedures defined in {{auth_type_1}} and {{auth_type_1}}.
+
+The receiver performs the following steps:
+
+
+1. Determine the setup type from the Auth Method and AlgorithmIdentifier:
+
+    - Type-1: if Auth Method is 14 and the AlgorithmIdentifier is one of algorithms defined in {{I-D.ietf-lamps-pq-composite-sigs}}
+    - Type-2: if Auth Method is the new IANA assigned value
+
+2. Verify that setup and AlgorithmIdentifier matches one of the combinations previously announced in the SUPPORTED_AUTH_METHODS notification. If no match is found, the receiver MUST reject the exchange with AUTHENTICATION_FAILED.
+
+3. Obtain public key from the CERT payload(s):
+
+    - For type-1: obtain the composite public key from the composite certificate in the first CERT payload.
+    - For type-2: obtain the PQC public key from the PQC certificate (first CERT payload) and the traditional public key from the traditional certificate (second CERT payload). Reconstruct the composite public key using the SerializePublicKey operation as defined in {{Section 4.1 of I-D.ietf-lamps-pq-composite-sigs}}.
+
+4. Run the Verify operation as defined in {{Section 3.3 of I-D.ietf-lamps-pq-composite-sigs}} with the following inputs:
+
+    - pk: the composite public key obtained in step 4
+    - M: InitiatorSignedOctets or ResponderSignedOctets as defined in {{Section 2.15 of RFC7296}}, depending on which peer's AUTH payload is being verified
+    - ctx: the ASCII encoding of the string "IKEv2-PQT-Hybrid-Auth" (21 octets, no null terminator)
+    - sig: the Signature Value from the Authentication Data field
+
+5. If the Verify operation returns failure, the receiver MUST reject the IKE_AUTH exchange with AUTHENTICATION_FAILED.
 
 
 # Security Considerations
@@ -348,7 +405,15 @@ The security of general PQ/T hybrid authentication is discussed in {{I-D.ietf-pq
 
 This document uses mechanisms defined in {{I-D.ietf-lamps-pq-composite-sigs}}, {{RFC7427}} and {{RFC9593}}, so the security discussion in the corresponding RFCs also apply.
 
-One important security consideration mentioned in {{I-D.ietf-lamps-pq-composite-sigs}} worth repeating here is that component key used in either {{type-1}} or {{type-2}} MUST NOT be reused in any other cases including single-algorithm case.
+One important security consideration mentioned in {{I-D.ietf-lamps-pq-composite-sigs}} worth repeating here is that component key used in either {{auth_type_1}} or {{auth_type_2}} MUST NOT be reused in any other cases including single-algorithm case.
+
+## Downgrade Attack Prevention
+
+The IKE_SA_INIT exchange is not integrity-protected, and an active attacker on the network path can modify or remove the SUPPORTED_AUTH_METHODS notification from an IKE_SA_INIT message. If such a notification is stripped from the responder's IKE_SA_INIT response, an initiator that supports both hybrid and non-hybrid authentication may fall back to traditional-only authentication without being aware of the attack.
+
+To prevent downgrade attacks, for a system that is configured to require mutual hybrid authentication for a given peer MUST NOT accept peer's SUPPORTED_AUTH_METHODS that doesn't contain expected hybrid authentication method & algorithm, also MUST NOT accept an IKE_AUTH exchange in which the remote peer's AUTH payload uses a non-hybrid Auth Method.
+
+
 
 
 # IANA Considerations
